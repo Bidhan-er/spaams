@@ -1,0 +1,903 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+
+    background: #eef1f6;
+
+    color: #172b4d;
+
+    min-height: 100vh;
+}
+
+
+/* =====================================================
+   SIDEBAR
+===================================================== */
+
+.sidebar {
+
+    position: fixed;
+
+    left: 0;
+    top: 0;
+
+    width: 285px;
+    height: 100vh;
+
+    background: #102746;
+
+    padding: 24px 21px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    color: white;
+}
+
+
+/* BRAND */
+
+.brand {
+
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 16px;
+
+    margin-bottom: 35px;
+}
+
+
+.logo {
+
+    width: 40px;
+    height: 40px;
+
+    min-width: 40px;
+
+    border-radius: 11px;
+
+    background: #e9b83f;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-size: 21px;
+}
+
+
+.brand-text h2 {
+
+    font-family: Georgia, serif;
+
+    font-size: 27px;
+
+    line-height: 1;
+
+    margin-bottom: 8px;
+}
+
+
+.brand-text p {
+
+    font-size: 11px;
+
+    line-height: 1.45;
+
+    color: #6f91bd;
+
+    max-width: 190px;
+}
+
+
+/* SIDEBAR MENU */
+
+.sidebar-menu {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+}
+
+
+.menu-item {
+
+    width: 100%;
+
+    min-height: 44px;
+
+    padding: 12px 10px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    background: transparent;
+
+    color: #78a1d1;
+
+    font-size: 15px;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    transition: 0.2s;
+}
+
+
+.menu-item:hover {
+
+    background: rgba(255,255,255,0.06);
+
+    color: white;
+}
+
+
+.menu-item.active {
+
+    background: #293d54;
+
+    color: white;
+}
+
+
+.menu-item span:first-child {
+
+    width: 20px;
+
+    text-align: center;
+
+    font-size: 15px;
+}
+
+
+.menu-dot {
+
+    width: 7px;
+    height: 7px;
+
+    border-radius: 50%;
+
+    background: #d7a52f;
+
+    margin-left: auto;
+
+    margin-right: 3px;
+}
+
+
+/* HOME */
+
+.home-button {
+
+    width: 48px;
+    height: 48px;
+
+    margin-top: auto;
+
+    border-radius: 11px;
+
+    border: 1px solid #315173;
+
+    background: #102746;
+
+    color: white;
+
+    font-size: 20px;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+
+.home-button:hover {
+
+    background: #1b395c;
+
+    transform: translateY(-1px);
+}
+
+
+/* =====================================================
+   MAIN CONTENT
+===================================================== */
+
+.main-content {
+
+    margin-left: 285px;
+
+    padding: 38px 42px 60px;
+
+    min-height: 100vh;
+}
+
+
+/* PAGE HEADER */
+
+.page-header {
+
+    margin-bottom: 25px;
+}
+
+
+.page-header h1 {
+
+    font-family: Georgia, serif;
+
+    font-size: 31px;
+
+    color: #172b4d;
+
+    margin-bottom: 5px;
+}
+
+
+.page-description {
+
+    font-size: 14px;
+
+    color: #6d7c91;
+}
+
+
+/* =====================================================
+   CONTROL CARD
+===================================================== */
+
+.control-card {
+
+    background: white;
+
+    border-radius: 15px;
+
+    min-height: 140px;
+
+    padding: 27px 32px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 40px;
+
+    box-shadow:
+        0 3px 15px rgba(20, 40, 70, 0.06);
+
+    margin-bottom: 28px;
+}
+
+
+/* SELECT AREA */
+
+.semester-selector {
+
+    width: 435px;
+}
+
+
+.semester-selector label {
+
+    display: block;
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+    color: #18345a;
+
+    margin-bottom: 9px;
+}
+
+
+#assignmentSelect {
+
+    width: 100%;
+
+    height: 45px;
+
+    padding: 0 13px;
+
+    border: 1px solid #cbd4df;
+
+    border-radius: 8px;
+
+    background: white;
+
+    color: #1d3555;
+
+    font-size: 14px;
+
+    outline: none;
+
+    cursor: pointer;
+}
+
+
+#assignmentSelect:hover {
+
+    border-color: #d9a82f;
+}
+
+
+#assignmentSelect:focus {
+
+    border-color: #d9a82f;
+
+    box-shadow:
+        0 0 0 2px rgba(217,168,47,0.13);
+}
+
+
+/* CURRENT DETAILS */
+
+.current-details {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 85px;
+
+    padding-right: 25px;
+}
+
+
+.detail-item {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+
+    min-width: 115px;
+}
+
+
+.detail-item span {
+
+    font-size: 12px;
+
+    color: #75839a;
+
+    letter-spacing: 0.3px;
+}
+
+
+.detail-item strong {
+
+    font-size: 16px;
+
+    color: #172f50;
+}
+
+
+/* =====================================================
+   STUDENT CARD
+===================================================== */
+
+.student-card {
+
+    background: white;
+
+    border-radius: 15px;
+
+    padding: 28px 32px 0;
+
+    box-shadow:
+        0 3px 15px rgba(20, 40, 70, 0.06);
+}
+
+
+/* STUDENT HEADER */
+
+.student-header {
+
+    display: flex;
+
+    align-items: flex-end;
+
+    justify-content: space-between;
+
+    gap: 35px;
+
+    margin-bottom: 18px;
+}
+
+
+.student-title h2 {
+
+    font-family: Georgia, serif;
+
+    font-size: 23px;
+
+    color: #172f50;
+
+    margin-bottom: 5px;
+}
+
+
+.student-title p {
+
+    font-size: 13px;
+
+    color: #7b8796;
+}
+
+
+/* SEARCH */
+
+.search-box {
+
+    width: 350px;
+}
+
+
+.search-box label {
+
+    display: block;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    color: #43566e;
+
+    margin-bottom: 7px;
+}
+
+
+#studentSearch {
+
+    width: 100%;
+
+    height: 42px;
+
+    border: 1px solid #cbd4df;
+
+    border-radius: 7px;
+
+    padding: 0 14px;
+
+    outline: none;
+
+    font-size: 13px;
+
+    color: #243b59;
+}
+
+
+#studentSearch:focus {
+
+    border-color: #d6a62f;
+
+    box-shadow:
+        0 0 0 2px rgba(214,166,47,0.12);
+}
+
+
+/* =====================================================
+   SEARCH RESULT
+===================================================== */
+
+.search-result {
+
+    min-height: 20px;
+
+    font-size: 12px;
+
+    color: #65758b;
+
+    margin-bottom: 7px;
+}
+
+
+.search-result.found {
+
+    color: #2c638f;
+
+    font-weight: 600;
+}
+
+
+.search-result.not-found {
+
+    color: #b34b4b;
+
+    font-weight: 600;
+}
+
+
+/* =====================================================
+   TABLE
+===================================================== */
+
+.table-container {
+
+    width: 100%;
+
+    overflow-x: auto;
+
+    border: 1px solid #e0e5eb;
+
+    border-radius: 9px;
+}
+
+
+table {
+
+    width: 100%;
+
+    min-width: 930px;
+
+    border-collapse: collapse;
+}
+
+
+thead {
+
+    background: #f3f5f8;
+}
+
+
+th {
+
+    height: 51px;
+
+    padding: 0 12px;
+
+    text-align: left;
+
+    border-bottom: 1px solid #dfe4ea;
+
+    color: #405570;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+
+td {
+
+    height: 56px;
+
+    padding: 8px 12px;
+
+    border-bottom: 1px solid #edf0f3;
+
+    color: #293e59;
+
+    font-size: 13px;
+}
+
+
+tbody tr:last-child td {
+
+    border-bottom: none;
+}
+
+
+tbody tr:hover {
+
+    background: #fafbfd;
+}
+
+
+/* STUDENT ID */
+
+.student-id {
+
+    font-weight: 600;
+
+    color: #24527f;
+}
+
+
+/* STUDENT NAME */
+
+.student-name {
+
+    font-weight: 500;
+}
+
+
+/* SEARCH HIGHLIGHT */
+
+.highlight {
+
+    font-weight: 800;
+
+    color: #102f54;
+
+    background: #fff0b8;
+
+    border-radius: 3px;
+
+    padding: 1px 3px;
+}
+
+
+/* =====================================================
+   MARK INPUTS
+===================================================== */
+
+.mark-input {
+
+    width: 82px;
+
+    height: 34px;
+
+    border: 1px solid #cbd4df;
+
+    border-radius: 5px;
+
+    padding: 0 8px;
+
+    text-align: center;
+
+    font-size: 13px;
+
+    color: #263d58;
+
+    outline: none;
+}
+
+
+.mark-input:hover {
+
+    border-color: #b7c2ce;
+}
+
+
+.mark-input:focus {
+
+    border-color: #d7a52f;
+
+    box-shadow:
+        0 0 0 2px rgba(215,165,47,0.12);
+}
+
+
+.total-mark {
+
+    font-weight: 700;
+
+    color: #183b63;
+}
+
+
+/* =====================================================
+   NO RESULTS
+===================================================== */
+
+.no-results {
+
+    display: none;
+
+    padding: 45px 20px;
+
+    text-align: center;
+
+    border: 1px solid #edf0f3;
+
+    border-top: none;
+
+    color: #68788d;
+}
+
+
+.no-result-icon {
+
+    font-size: 26px;
+
+    margin-bottom: 8px;
+}
+
+
+.no-results strong {
+
+    display: block;
+
+    font-size: 14px;
+
+    color: #42566e;
+
+    margin-bottom: 5px;
+}
+
+
+.no-results p {
+
+    font-size: 12px;
+
+    color: #8591a0;
+}
+
+
+/* =====================================================
+   SAVE AREA
+===================================================== */
+
+.save-area {
+
+    min-height: 82px;
+
+    display: flex;
+
+    justify-content: flex-end;
+
+    align-items: center;
+
+    gap: 20px;
+
+    border-top: 1px solid #edf0f3;
+
+    margin-top: 22px;
+}
+
+
+.save-message {
+
+    font-size: 13px;
+
+    color: #2f7d4d;
+}
+
+
+.save-button {
+
+    border: none;
+
+    background: #e0ad38;
+
+    color: #172b4d;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    padding: 12px 24px;
+
+    border-radius: 7px;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+
+.save-button:hover {
+
+    background: #c99825;
+
+    transform: translateY(-1px);
+}
+
+
+.save-button:active {
+
+    transform: translateY(0);
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 1100px) {
+
+    .control-card {
+
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+
+    .semester-selector {
+
+        width: 100%;
+    }
+
+
+    .current-details {
+
+        padding-right: 0;
+    }
+
+}
+
+
+@media (max-width: 800px) {
+
+    .sidebar {
+
+        width: 220px;
+    }
+
+
+    .main-content {
+
+        margin-left: 220px;
+
+        padding: 25px;
+    }
+
+
+    .student-header {
+
+        align-items: stretch;
+
+        flex-direction: column;
+    }
+
+
+    .search-box {
+
+        width: 100%;
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .sidebar {
+
+        position: relative;
+
+        width: 100%;
+
+        height: auto;
+    }
+
+
+    .home-button {
+
+        position: absolute;
+
+        right: 20px;
+
+        bottom: 20px;
+    }
+
+
+    .main-content {
+
+        margin-left: 0;
+
+        padding: 20px 15px 40px;
+    }
+
+
+    .current-details {
+
+        gap: 40px;
+    }
+
+}

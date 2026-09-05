@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SPAAMS - Teacher Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body class="admin-body">
+
+  <div class="admin-shell">
+
+    <!-- SIDEBAR — same structure/colors as the Admin panel -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="logo-inline">🎓</span>
+        <span class="sidebar-title">SPAAMS</span>
+      </div>
+      <p class="sidebar-tagline">Students Performance Analytic and attendance Monitoring System</p>
+
+      <nav class="sidebar-menu">
+        <button class="menu-item active" data-menu="semester-details">Semester-wise Details <span class="dot"></span></button>
+        <button class="menu-item" data-menu="semester-dashboard">Semester-wise Dashboard <span class="dot"></span></button>
+        <button class="menu-item" data-menu="attendance-monitoring">Attendance Monitoring <span class="dot"></span></button>
+      </nav>
+
+      <button class="btn-home-sidebar" id="btn-teacher-home" title="Back one step">🏠</button>
+    </aside>
+
+    <!-- MAIN CONTENT PANE -->
+    <main class="content-pane">
+      <div class="teacher-profile-chip" aria-label="Logged-in teacher">
+        <span id="teacher-profile-avatar" class="teacher-profile-avatar">👤</span>
+        <span id="teacher-profile-name">Teacher</span>
+      </div>
+
+      <!-- ---- VIEW: Semester-wise Details (one continuous view now:
+           selector card up top, marks grid full-width below it) ---- -->
+      <section class="view active" id="view-teacher-list">
+        <div class="pane-header">
+          <h2>Semester Details</h2>
+          <div class="search-row">
+            <label class="search-label">Search:</label>
+            <input type="text" id="teacher-marks-search" placeholder="Search student....." autocomplete="off" />
+            <span id="teacher-search-count" class="search-count"></span>
+          </div>
+        </div>
+        <h3 class="sub-heading">Class-wise Dashboard</h3>
+
+        <div class="config-card">
+          <div class="selector-row">
+            <label class="selector-label">Stream:</label>
+            <span class="pill-badge">BCA</span>
+          </div>
+          <div class="selector-row">
+            <label class="selector-label">Semester:</label>
+            <select id="teacher-semester-select"></select>
+          </div>
+        </div>
+
+        <!-- Full width, outside the card -->
+        <h3 class="sub-heading" id="teacher-marks-title">Semester / Subject</h3>
+        <p id="teacher-empty-state" class="teacher-empty-state" style="display:none;"></p>
+
+        <div class="column-manager-row">
+          <label class="selector-label">Add column:</label>
+          <input type="text" id="new-column-name" placeholder="e.g. Unit Test" />
+          <button class="btn btn-outline-small" id="btn-add-column">+ Add Column</button>
+          <span class="column-manager-hint">Click the × on any column header to remove it.</span>
+        </div>
+
+        <div class="table-scroll">
+          <table class="marks-table" id="teacher-marks-table">
+            <thead id="teacher-marks-head"></thead>
+            <tbody id="teacher-marks-body"></tbody>
+            <tfoot id="teacher-marks-foot"></tfoot>
+          </table>
+        </div>
+
+        <div class="save-row">
+          <button class="btn btn-gold" id="btn-save-teacher-marks">Save Marks</button>
+          <span id="teacher-save-confirmation" class="save-confirmation"></span>
+        </div>
+      </section>
+
+      <!-- ---- VIEW: Semester-wise Dashboard (class-wide, not per-student entry) ---- -->
+      <section class="view" id="view-teacher-dashboard">
+        <div class="pane-header">
+          <h2>Semester-wise Dashboard</h2>
+        </div>
+
+        <div class="selector-row" style="justify-content: space-between;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <label class="selector-label">Select Stream</label>
+            <select id="dash-stream-select">
+              <option value="BCA">BCA</option>
+            </select>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <label class="selector-label">Select Semester</label>
+            <select id="dash-semester-select"></select>
+          </div>
+        </div>
+
+        <h3 class="sub-heading" id="dash-title">Semester / Subject</h3>
+
+        <div class="table-scroll">
+          <table class="marks-table" id="dash-summary-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Full Name</th>
+                <th>Attdn.</th>
+                <th>Assign.</th>
+                <th>Lab</th>
+                <th>Overall Act.</th>
+                <th>Total ave.</th>
+              </tr>
+            </thead>
+            <tbody id="dash-summary-body"></tbody>
+            <tfoot>
+              <tr>
+                <td class="student-id-cell">Class</td>
+                <td class="student-name-cell">Total</td>
+                <td class="total-avg-cell" id="dash-total-attendance">–</td>
+                <td class="total-avg-cell" id="dash-total-assignment">–</td>
+                <td class="total-avg-cell" id="dash-total-lab">–</td>
+                <td class="total-avg-cell" id="dash-total-overall">–</td>
+                <td class="total-avg-cell" id="dash-total-average">–</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="dashboard-charts-row">
+          <div class="chart-area dashboard-chart-area">
+            <div class="chart-box" id="dash-donut-box"></div>
+            <div class="chart-box chart-box-large" id="dash-pie-box"></div>
+            <ul class="chart-legend" id="dash-legend"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---- VIEW: Attendance Monitoring ---- -->
+      <section class="view" id="view-teacher-attendance">
+        <div class="pane-header">
+          <h2>Attendance dashboard</h2>
+          <span id="attendance-today-date" class="attendance-date-label"></span>
+        </div>
+
+        <div class="config-card">
+          <div class="config-card-header">
+            <span class="config-card-title">Session Selectors</span>
+          </div>
+          <div class="selector-row">
+            <label class="selector-label">Select Stream</label>
+            <select id="att-stream-select"><option value="BCA">BCA</option></select>
+            <label class="selector-label">Select Semester</label>
+            <select id="att-semester-select"></select>
+          </div>
+        </div>
+
+        <!-- STEP: mark attendance -->
+        <div id="att-step-mark">
+          <h3 class="sub-heading" id="att-mark-title">Attendance details</h3>
+          <p id="att-locked-message" class="upgrade-status-message blocked" style="display:none;"></p>
+
+          <div class="table-scroll">
+            <table class="marks-table" id="att-mark-table">
+              <thead>
+                <tr>
+                  <th>IDs</th>
+                  <th>Name</th>
+                  <th>
+                    Present/Absent
+                    <input type="checkbox" id="att-select-all" checked title="Select all present / clear all" />
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="att-mark-body"></tbody>
+            </table>
+          </div>
+
+          <table class="detail-table" id="att-summary-table">
+            <thead>
+              <tr><th>Total Students</th><th>Total Present</th><th>Total Absent</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td id="att-total-students">0</td>
+                <td id="att-total-present">0</td>
+                <td id="att-total-absent">0</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="save-row">
+            <button class="btn btn-gold" id="btn-att-submit">Submit</button>
+          </div>
+        </div>
+
+        <!-- STEP: absent students + guardian message -->
+        <div id="att-step-absent" style="display:none;">
+          <h3 class="sub-heading">Absent Students</h3>
+          <h4 class="sub-heading" id="att-absent-subtitle" style="margin-top:-6px;"></h4>
+
+          <div class="table-scroll">
+            <table class="detail-table">
+              <thead>
+                <tr><th>Id</th><th>Student's full name</th><th>Guardian's name</th><th>Contact number</th></tr>
+              </thead>
+              <tbody id="att-absent-body"></tbody>
+            </table>
+          </div>
+
+          <div class="config-card">
+            <div class="config-card-header"><span class="config-card-title">Message</span></div>
+            <textarea id="att-guardian-message" class="att-message-box" rows="3">Your son/daughter is not attending today's class. If you have any problem please contact college administration.
+College administration
+Contact number: 98XXXXXXXX, email address: class@gmail.com</textarea>
+          </div>
+
+          <div class="save-row">
+            <button class="btn btn-navy" id="btn-att-send-message">Send message to all Absent student's guardians</button>
+            <span id="att-send-confirmation" class="save-confirmation"></span>
+          </div>
+        </div>
+
+        <!-- STEP: success -->
+        <div id="att-step-success" style="display:none;">
+          <h3 class="sub-heading">Attendance sent successfully</h3>
+
+          <div class="table-scroll">
+            <table class="marks-table" id="att-success-table">
+              <thead>
+                <tr><th>IDs</th><th>Name</th><th>Present/Absent</th></tr>
+              </thead>
+              <tbody id="att-success-body"></tbody>
+            </table>
+          </div>
+
+          <p class="upgrade-status-message ok">Attendance submitted successfully. Thank you.</p>
+
+          <button class="btn btn-gold btn-logout" id="btn-att-logout">Logout</button>
+        </div>
+      </section>
+
+      <!-- ---- VIEW: placeholder for not-yet-built menu items ---- -->
+      <section class="view" id="view-coming-soon">
+        <div class="empty-hint">This section will be built next.</div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/teacher.js"></script>
+</body>
+</html>

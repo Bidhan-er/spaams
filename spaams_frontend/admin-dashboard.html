@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SPAAMS - Admin Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body class="admin-body">
+
+  <div class="admin-shell">
+
+    <!-- ============================================================
+         SIDEBAR (always visible)
+         ============================================================ -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="logo-inline">🎓</span>
+        <span class="sidebar-title">SPAAMS</span>
+      </div>
+      <p class="sidebar-tagline">Student Performance Analytics and attendance Monitoring System</p>
+
+      <nav class="sidebar-menu">
+        <button class="menu-item active" data-menu="student-dashboard">Student Dashboard <span class="dot"></span></button>
+        <button class="menu-item" data-menu="semester-wise-details">Semester-wise Details <span class="dot"></span></button>
+        <button class="menu-item" data-menu="semester-wise-dashboard">Semester-wise Dashboard <span class="dot"></span></button>
+        <button class="menu-item" data-menu="attendance-monitoring">Attendance Monitoring <span class="dot"></span></button>
+        <button class="menu-item" data-menu="customize-admin">Customize Admin <span class="dot"></span></button>
+        <button class="menu-item" data-menu="setting">Setting <span class="dot"></span></button>
+      </nav>
+
+      <button class="btn-home-sidebar" id="btn-back" title="Back one step">🏠</button>
+    </aside>
+
+    <!-- ============================================================
+         MAIN CONTENT PANE (light, matches the mockup)
+         Different "views" inside here are swapped by admin.js
+         ============================================================ -->
+    <main class="content-pane">
+
+      <!-- ---- VIEW: empty state (just landed on Student Dashboard) ---- -->
+      <section class="view" id="view-empty">
+        <div class="empty-hint">Select a menu item to get started.</div>
+      </section>
+
+      <!-- ---- VIEW: student list (search + table) ---- -->
+      <section class="view" id="view-student-list">
+        <div class="pane-header">
+          <h2>Student Dashboard</h2>
+          <div class="search-row">
+            <label for="student-search" class="search-label">Search Context:</label>
+            <input
+              type="text"
+              id="student-search"
+              placeholder="Enter by ID/Name..."
+              autocomplete="off"
+            />
+            <span id="search-result-count" class="search-count"></span>
+            <label for="student-semester-filter" class="search-label">Semester:</label>
+            <select id="student-semester-filter"><option value="all">All semesters</option></select>
+          </div>
+        </div>
+
+        <div class="student-table-scroll"><table class="student-table">
+          <thead>
+            <tr>
+              <th colspan="5">Personal Details</th>
+              <th colspan="4">Academic Details</th>
+            </tr>
+            <tr>
+              <th>Reg. No.</th>
+              <th>Full Name</th>
+              <th>Address</th>
+              <th>Contact No.</th>
+              <th>Email address</th>
+              <th>Faculty</th>
+              <th>Semester</th>
+              <th>GPA/Marks</th>
+              <th>Rank</th>
+            </tr>
+          </thead>
+          <tbody id="student-table-body">
+            <!-- rows injected by admin.js -->
+          </tbody>
+        </table></div>
+      </section>
+
+      <!-- ---- VIEW: student detail ---- -->
+      <section class="view" id="view-student-detail">
+        <div class="detail-header">
+          <div class="detail-avatar">🙂</div>
+          <div class="detail-name" id="detail-student-name">Student Name</div>
+
+          <div class="details-dropdown">
+            <button class="btn-details" id="btn-details-toggle">Details ▾</button>
+            <div class="dropdown-menu" id="dropdown-menu">
+              <button class="dropdown-option active" data-tab="personal">Personal Details</button>
+              <button class="dropdown-option" data-tab="academic">Academic Details</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Personal tab -->
+        <div class="tab-panel active" id="tab-personal">
+          <h3>Your Personal Details</h3>
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>Registration No.</th>
+                <th>Full Name</th>
+                <th>Contact No.</th>
+                <th>Address</th>
+                <th>Email address</th>
+              </tr>
+            </thead>
+            <tbody id="personal-details-row"></tbody>
+          </table>
+        </div>
+
+        <!-- Academic tab -->
+        <div class="tab-panel" id="tab-academic">
+          <h3>Academic Details</h3>
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>Registration ID</th>
+                <th>Faculty</th>
+                <th>Semester</th>
+                <th>Attendance</th>
+                <th>Lab</th>
+                <th>Overall Activities</th>
+                <th>Total average</th>
+                <th>Board marks</th>
+              </tr>
+            </thead>
+            <tbody id="academic-details-row"></tbody>
+          </table>
+
+          <div class="chart-area">
+            <div class="chart-box">
+              <div id="chart-loading" class="chart-loading">Loading chart…</div>
+              <img id="performance-chart" class="performance-chart" alt="Performance breakdown pie chart" />
+            </div>
+            <ul class="chart-legend">
+              <li><span class="swatch swatch-attendance"></span> Attendance</li>
+              <li><span class="swatch swatch-assignments"></span> Assignments</li>
+              <li><span class="swatch swatch-lab"></span> Lab</li>
+              <li><span class="swatch swatch-result"></span> Result</li>
+              <li><span class="swatch swatch-overall"></span> Overall activities</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---- VIEW: Semester-wise Details (per-student marks grid) ---- -->
+      <section class="view" id="view-semester-details">
+        <div class="pane-header">
+          <h2>Semester-wise Details</h2>
+          <div class="search-row">
+            <label class="search-label">Search:</label>
+            <input type="text" id="semester-marks-search" placeholder="Search student..." autocomplete="off" />
+            <span id="semester-search-count" class="search-count"></span>
+          </div>
+        </div>
+
+        <div class="selector-row">
+          <label class="selector-label" for="detail-stream-select">Select Stream</label>
+          <select id="detail-stream-select">
+            <option value="BCA">BCA</option>
+          </select>
+
+          <label class="selector-label" for="detail-semester-select">Select Semester</label>
+          <select id="detail-semester-select">
+            <option value="1">I Semester</option>
+            <option value="2">II Semester</option>
+            <option value="3">III Semester</option>
+            <option value="4">IV Semester</option>
+            <option value="5">V Semester</option>
+            <option value="6">VI Semester</option>
+            <option value="7">VII Semester</option>
+            <option value="8">VIII Semester</option>
+          </select>
+        </div>
+
+        <h3 class="sub-heading" id="semester-marks-title">I Semester details</h3>
+
+        <div class="table-scroll">
+          <table class="marks-table" id="marks-table">
+            <thead id="marks-table-head"></thead>
+            <tbody id="marks-table-body"></tbody>
+          </table>
+        </div>
+
+        <div class="save-row">
+          <button class="btn btn-gold" id="btn-save-marks">Save</button>
+          <span id="save-confirmation" class="save-confirmation"></span>
+        </div>
+      </section>
+
+      <!-- ---- VIEW: Semester-wise Dashboard (whole-class analytics) ---- -->
+      <section class="view" id="view-semester-dashboard">
+        <div class="pane-header">
+          <h2>Semester-wise Dashboard</h2>
+        </div>
+
+        <div class="selector-row">
+          <label class="selector-label" for="dash-stream-select">Select Stream</label>
+          <select id="dash-stream-select">
+            <option value="BCA">BCA</option>
+          </select>
+
+          <label class="selector-label" for="dash-semester-select">Select Semester</label>
+          <select id="dash-semester-select">
+            <option value="1">I Semester</option>
+            <option value="2">II Semester</option>
+            <option value="3">III Semester</option>
+            <option value="4">IV Semester</option>
+            <option value="5">V Semester</option>
+            <option value="6">VI Semester</option>
+            <option value="7">VII Semester</option>
+            <option value="8">VIII Semester</option>
+          </select>
+
+          <label class="selector-label" for="dash-batch-select">Select Batch</label>
+          <select id="dash-batch-select">
+            <option value="all">All Batches</option>
+            <option value="2021">2021 Batch</option>
+            <option value="2022">2022 Batch</option>
+            <option value="2023">2023 Batch</option>
+          </select>
+        </div>
+
+        <h3 class="sub-heading" id="dashboard-semester-title">I Semester details</h3>
+
+        <div class="table-scroll">
+          <table class="marks-table" id="dashboard-summary-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Full Name</th>
+                <th>Attdn.</th>
+                <th>Assign.</th>
+                <th>Lab</th>
+                <th>Overall Act.</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody id="dashboard-summary-body"></tbody>
+          </table>
+        </div>
+
+        <div class="dashboard-charts-row">
+          <div class="chart-area dashboard-chart-area">
+            <div class="chart-box">
+              <div class="fallback-pie" id="attendance-pie"></div>
+            </div>
+            <div class="chart-box">
+              <div class="fallback-pie" id="breakdown-pie"></div>
+            </div>
+            <ul class="chart-legend" id="dashboard-legend"></ul>
+          </div>
+        </div>
+
+        <div class="analysis-panel">
+          <h3 class="sub-heading">Analysis</h3>
+          <div class="analysis-grid" id="analysis-grid"></div>
+        </div>
+      </section>
+
+      <!-- ---- VIEW: Attendance Monitoring ---- -->
+      <section class="view" id="view-attendance">
+        <div class="pane-header">
+          <h2>Attendance Monitoring</h2>
+          <div class="search-row">
+            <label class="search-label">Search:</label>
+            <input type="text" id="attendance-search" placeholder="Search student by name..." autocomplete="off" />
+            <span id="attendance-search-count" class="search-count"></span>
+          </div>
+        </div>
+
+        <div class="selector-row">
+          <label class="selector-label" for="att-stream-select">Select Stream</label>
+          <select id="att-stream-select">
+            <option value="BCA">BCA</option>
+          </select>
+
+          <label class="selector-label" for="att-semester-select">Select Semester</label>
+          <select id="att-semester-select">
+            <option value="1">I Semester</option>
+            <option value="2">II Semester</option>
+            <option value="3">III Semester</option>
+            <option value="4">IV Semester</option>
+            <option value="5" selected>V Semester</option>
+            <option value="6">VI Semester</option>
+            <option value="7">VII Semester</option>
+            <option value="8">VIII Semester</option>
+          </select>
+
+          <label class="selector-label" for="att-date-input">Date</label>
+          <input type="date" id="att-date-input" />
+        </div>
+
+        <h3 class="sub-heading">Attendance details</h3>
+        <h4 class="sub-heading-2" id="attendance-semester-title">V Semester Attendance</h4>
+
+        <div class="table-scroll">
+          <table class="attendance-table" id="attendance-table">
+            <thead>
+              <tr>
+                <th>IDs</th>
+                <th>Name</th>
+                <th>
+                  Present / Absent
+                  <input type="checkbox" id="attendance-select-all" title="Mark everyone present/absent" />
+                </th>
+              </tr>
+            </thead>
+            <tbody id="attendance-table-body"></tbody>
+          </table>
+        </div>
+
+        <table class="attendance-summary-table">
+          <thead>
+            <tr>
+              <th>Total Students</th>
+              <th>Total Present</th>
+              <th>Total Absent</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td id="summary-total">0</td>
+              <td id="summary-present">0</td>
+              <td id="summary-absent">0</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="save-row">
+          <button class="btn btn-gold" id="btn-save-attendance">Save</button>
+          <span id="attendance-save-confirmation" class="save-confirmation"></span>
+        </div>
+      </section>
+
+      <!-- ---- VIEW: Customize Admin ---- -->
+      <section class="view" id="view-customize-admin">
+        <div class="pane-header">
+          <h2>Customize Admin</h2>
+        </div>
+        <h3 class="sub-heading">System Configuration &amp; Data Management</h3>
+
+        <!-- CSV bulk upload -->
+        <div class="config-card">
+          <div class="config-card-header">
+            <span class="config-card-title">Upload CSV &amp; Smart Validation Engine</span>
+          </div>
+          <div class="csv-upload-row">
+            <div>
+              <input type="file" id="csv-file-input" accept=".csv" />
+              <p class="csv-hint">
+                Expected columns: registration_number, full_name, gender, date_of_birth,
+                phone, address, guardian_name, guardian_phone, faculty, semester_number, academic_year
+              </p>
+              <p class="csv-hint">Optional columns: email, guardian_email. After choosing a file, map your own CSV headings below.</p>
+              <div id="csv-column-mapping" aria-live="polite"></div>
+            </div>
+            <button class="btn btn-navy" id="btn-validate-import">Validation &amp; Import</button>
+            <button class="btn btn-outline-small" id="btn-export-students">Export CSV</button>
+          </div>
+          <div id="csv-preview-area"></div>
+        </div>
+
+        <!-- Assigned Subjects -->
+        <div class="config-card">
+          <div class="config-card-header">
+            <span class="config-card-title">Assigned Subjects</span>
+          </div>
+          <div class="selector-row">
+            <label class="selector-label" for="subject-semester-select">Select Semester</label>
+            <select id="subject-semester-select">
+              <option value="1">I Semester</option>
+              <option value="2">II Semester</option>
+              <option value="3">III Semester</option>
+              <option value="4">IV Semester</option>
+              <option value="5">V Semester</option>
+              <option value="6">VI Semester</option>
+              <option value="7">VII Semester</option>
+              <option value="8">VIII Semester</option>
+            </select>
+            <input type="text" id="new-subject-input" placeholder="New subject name..." />
+            <button class="btn btn-gold" id="btn-add-subject">+ Add Subject</button>
+          </div>
+          <ul class="subject-chip-list" id="subject-chip-list"></ul>
+        </div>
+
+        <!-- Manual Records Control -->
+        <h3 class="sub-heading manual-records-heading">Manual Records Control</h3>
+        <div class="manual-records-grid">
+
+          <!-- ADD USER (student) -->
+          <div class="record-card record-card-add collapsible-record-card collapsed" id="manual-student-card">
+            <div class="record-card-title">ADD USER<br /><span>(Student)</span></div>
+            <button type="button" class="record-card-toggle" aria-expanded="false" aria-controls="manual-student-card">⌄ <span>Open student form</span></button>
+
+            <input type="text" id="new-student-name" placeholder="Full Name" />
+            <input type="text" id="new-student-regno" placeholder="Registration Number" />
+            <input type="text" id="new-student-symbol" placeholder="Symbol Number" />
+            <select id="new-student-gender">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+            <input type="date" id="new-student-dob" />
+            <input type="text" id="new-student-phone" placeholder="Phone" />
+            <input type="text" id="new-student-address" placeholder="Address" />
+            <input type="text" id="new-student-guardian" placeholder="Guardian Name" />
+            <input type="text" id="new-student-guardian-phone" placeholder="Guardian Phone" />
+            <input type="number" id="new-student-batch" placeholder="Batch / Academic Year (e.g. 2025)" min="2000" max="2100" />
+            <select id="new-student-semester">
+              <option value="1">I Semester</option>
+              <option value="2">II Semester</option>
+              <option value="3">III Semester</option>
+              <option value="4">IV Semester</option>
+              <option value="5">V Semester</option>
+              <option value="6">VI Semester</option>
+              <option value="7">VII Semester</option>
+              <option value="8">VIII Semester</option>
+            </select>
+
+            <button class="btn btn-navy record-submit" id="btn-add-student">Add Student</button>
+            <div id="new-student-result" class="credential-result"></div>
+          </div>
+
+          <!-- TEACHER BULK IMPORT + MANUAL ENTRY -->
+          <div class="record-card record-card-add collapsible-record-card collapsed" id="manual-teacher-card">
+            <div class="record-card-title">TEACHER<br />Bulk Import</div>
+            <button type="button" class="record-card-toggle" aria-expanded="false" aria-controls="manual-teacher-card">⌄ <span>Open teacher tools</span></button>
+            <p class="csv-hint">Required: teacher_name, email, phone, qualification.<br />Optional: username, gender, joining_date, status.</p>
+            <input type="file" id="teacher-csv-file-input" accept=".csv" />
+            <button class="btn btn-navy record-submit" id="btn-import-teachers">Import Teachers</button>
+            <button class="btn btn-outline-small" id="btn-export-teachers">Export Teachers</button>
+            <div id="teacher-import-result" class="credential-result"></div>
+            <hr />
+            <div class="record-card-title" style="font-size:15px;">Manual Teacher Entry</div>
+            <input type="text" id="manual-teacher-username" placeholder="Username (optional)" />
+            <input type="text" id="manual-teacher-name" placeholder="Teacher Name *" />
+            <select id="manual-teacher-gender"><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other / prefer not to say</option></select>
+            <input type="email" id="manual-teacher-email" placeholder="Email *" />
+            <input type="text" id="manual-teacher-phone" placeholder="Phone *" />
+            <input type="text" id="manual-teacher-qualification" placeholder="Qualification *" />
+            <label class="csv-hint">Joining date <input type="date" id="manual-teacher-joining-date" /></label>
+            <select id="manual-teacher-status"><option value="Active">Active</option><option value="Disabled">Disabled</option></select>
+            <label class="csv-hint">Optional first assignment</label>
+            <input type="number" id="manual-teacher-batch" placeholder="Assignment batch / Academic Year (e.g. 2025)" min="2000" max="2100" />
+            <div class="assignment-rows" id="teacher-assignment-rows"></div>
+            <button class="btn btn-navy record-submit" id="btn-add-teacher-manual">Add Teacher</button>
+            <div id="manual-teacher-result" class="credential-result"></div>
+          </div>
+
+          <!-- UPDATE USER (student or teacher) -->
+          <div class="record-card record-card-update">
+            <div class="record-card-title">Update<br />User</div>
+
+            <div class="update-role-toggle">
+              <label><input type="radio" name="update-role" value="student" checked /> Student</label>
+              <label><input type="radio" name="update-role" value="teacher" /> Teacher</label>
+            </div>
+
+            <input type="text" id="update-search" placeholder="Search..." autocomplete="off" />
+            <ul class="update-results" id="update-results"></ul>
+
+            <div id="update-form-area"></div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ---- VIEW: Setting ---- -->
+      <section class="view" id="view-setting">
+        <div class="pane-header">
+          <h2>Setting</h2>
+        </div>
+        <h3 class="sub-heading">Data Management</h3>
+
+        <!-- Teacher Management -->
+        <div class="config-card">
+          <div class="config-card-header">
+            <span class="config-card-title">Teacher Management</span>
+          </div>
+          <div class="table-scroll">
+            <table class="detail-table" id="teacher-management-table">
+              <thead>
+                <tr>
+                  <th>Teacher ID</th>
+                  <th>Login ID</th>
+                  <th>Username</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Qualification</th>
+                  <th>Joining Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="teacher-management-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Manual Records Control: separate Student and Teacher accounts -->
+        <h3 class="sub-heading manual-records-heading">Manual Records Control</h3>
+        <div class="manual-records-grid">
+
+          <!-- Student account status -->
+          <div class="record-card record-card-toggle">
+            <div class="record-card-title">Student<br /><span>Enable / Disable</span></div>
+            <input type="text" id="student-status-id" placeholder="Registration number" autocomplete="off" />
+            <input type="text" id="student-status-name" placeholder="Student name" autocomplete="off" />
+            <ul class="status-suggestions" id="student-status-suggestions"></ul>
+            <div class="toggle-row">
+              <span class="toggle-switch" id="student-status-toggle"><span class="toggle-knob"></span></span>
+              <span class="toggle-state-label" id="student-status-label">Search by name or registration number</span>
+            </div>
+            <button class="btn btn-navy record-submit" id="btn-confirm-student-status" disabled>Select a student first</button>
+            <div id="student-status-result" class="credential-result"></div>
+          </div>
+
+          <!-- Teacher account status -->
+          <div class="record-card record-card-toggle">
+            <div class="record-card-title">Teacher<br /><span>Enable / Disable</span></div>
+            <input type="text" id="teacher-status-id" placeholder="Teacher ID or username" autocomplete="off" />
+            <input type="text" id="teacher-status-name" placeholder="Teacher name" autocomplete="off" />
+            <ul class="status-suggestions" id="teacher-status-suggestions"></ul>
+            <div class="toggle-row">
+              <span class="toggle-switch" id="teacher-status-toggle"><span class="toggle-knob"></span></span>
+              <span class="toggle-state-label" id="teacher-status-label">Search by name, teacher ID, or username</span>
+            </div>
+            <button class="btn btn-navy record-submit" id="btn-confirm-teacher-status" disabled>Select a teacher first</button>
+            <div id="teacher-status-result" class="credential-result"></div>
+          </div>
+
+          <!-- Upgrade -->
+          <div class="record-card record-card-upgrade">
+            <div class="record-card-title">Upgrade</div>
+            <p class="upgrade-hint">Promote every student in a semester to the next one.</p>
+            <button class="upgrade-arrow-btn" id="btn-open-upgrade" title="Upgrade Semester">⬆</button>
+          </div>
+
+        </div>
+
+        <!-- Upgrade Semester panel (revealed by the green arrow) -->
+        <div class="config-card" id="upgrade-panel" style="display:none;">
+          <div class="config-card-header">
+            <span class="config-card-title">Upgrade Semester</span>
+          </div>
+          <div class="selector-row">
+            <label class="selector-label" for="upgrade-semester-select">Select Semester</label>
+            <select id="upgrade-semester-select"></select>
+            <label class="selector-label" for="upgrade-batch-select">Select Batch</label>
+            <select id="upgrade-batch-select"></select>
+            <button class="btn btn-navy" id="btn-move-semester">Promote selected batch</button>
+          </div>
+          <p id="upgrade-status-message" class="upgrade-status-message"></p>
+
+          <div class="table-scroll">
+            <table class="detail-table">
+              <thead>
+                <tr><th>Semester</th><th>Last Promoted</th></tr>
+              </thead>
+              <tbody id="promotion-history-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Data Storage Management -->
+        <div class="config-card">
+          <div class="config-card-header">
+            <span class="config-card-title">Data Storage Management</span>
+          </div>
+          <div class="search-row">
+            <label class="search-label">Search Context:</label>
+            <input type="text" id="archive-search" placeholder="Search by name/ID" autocomplete="off" />
+            <span id="archive-search-count" class="search-count"></span>
+          </div>
+          <div class="table-scroll">
+            <table class="detail-table">
+              <thead>
+                <tr><th>ID</th><th>Full Name</th><th>Batch</th><th>Final Marks</th></tr>
+              </thead>
+              <tbody id="archive-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <button class="btn btn-gold btn-logout" id="btn-logout-admin">Logout</button>
+      </section>
+
+      <!-- ---- VIEW: placeholder for not-yet-built menu items ---- -->
+      <section class="view" id="view-coming-soon">
+        <div class="empty-hint">This section will be built next.</div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

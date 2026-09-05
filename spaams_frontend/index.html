@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SPAAMS - Login</title>
+
+  <!-- Separate CSS file, linked here -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Google Font for the headings (falls back to serif if offline) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ============================================================
+       PAGE 1: LANDING PAGE
+       ============================================================ -->
+  <section id="page-landing" class="page active">
+    <div class="backdrop"></div>
+    <div class="content-center">
+      <div class="brand brand-lg">
+        <div class="logo logo-lg">🎓</div>
+        <div>
+          <h1 class="brand-title">SPAAMS</h1>
+          <p class="brand-subtitle">Student Performance Analytics &amp; Attendance Monitoring</p>
+        </div>
+      </div>
+
+      <p class="tagline">
+        A smarter way to monitor performance, attendance, and help
+        students achieve excellence.
+      </p>
+
+      <div class="btn-row">
+        <button class="btn btn-outline">Highlights</button>
+        <button class="btn btn-gold" id="btn-go-login">👤 Login</button>
+      </div>
+
+      <div class="footer-tags">
+        <span>Secure</span><span class="dot"></span>
+        <span>Reliable</span><span class="dot"></span>
+        <span>Efficient</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PAGE 2: ROLE SELECT
+       ============================================================ -->
+  <section id="page-role" class="page">
+    <div class="backdrop"></div>
+    <button class="btn-home" id="btn-role-home" aria-label="Back to home">🏠</button>
+
+    <div class="content-center">
+      <div class="brand brand-lg">
+        <div class="logo logo-lg">🎓</div>
+        <div>
+          <h1 class="brand-title">SPAAMS</h1>
+          <p class="brand-subtitle">Student Performance Analytics &amp; Attendance Monitoring</p>
+        </div>
+      </div>
+
+      <p class="tagline">
+        A smarter way to monitor performance, attendance and help
+        students achieve excellence.
+      </p>
+
+      <div class="section-label">Login As</div>
+
+      <div class="role-row">
+        <div class="role-card">
+          <div class="role-icon role-icon-admin">🛡️</div>
+          <div class="role-name">Admin</div>
+          <button class="btn btn-role btn-role-admin" data-role="Admin">👤 Login</button>
+        </div>
+        <div class="role-card">
+          <div class="role-icon role-icon-teacher">👥</div>
+          <div class="role-name">Teacher</div>
+          <button class="btn btn-role btn-role-teacher" data-role="Teacher">👤 Login</button>
+        </div>
+        <div class="role-card">
+          <div class="role-icon role-icon-student">📘</div>
+          <div class="role-name">Student</div>
+          <button class="btn btn-role btn-role-student" data-role="Student">👤 Login</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PAGE 3: LOGIN FORM (shared for all 3 roles)
+       ============================================================ -->
+  <section id="page-login" class="page">
+    <div class="backdrop"></div>
+    <div class="login-card">
+      <button class="btn-home btn-home-inline" id="btn-login-home" aria-label="Back to home">🏠</button>
+
+      <div class="brand">
+        <span class="logo-inline">🎓</span>
+        <span class="brand-title brand-title-sm">SPAAMS</span>
+      </div>
+      <p class="login-subtitle">Student Performance Analytics and attendance Monitoring System</p>
+
+      <div class="radio-row" id="role-radio-group">
+        <label class="radio-label">
+          <input type="radio" name="role" value="Admin" id="radio-admin" />
+          <span class="radio-dot"></span> Admin
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="role" value="Teacher" id="radio-teacher" />
+          <span class="radio-dot"></span> Teacher
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="role" value="Student" id="radio-student" />
+          <span class="radio-dot"></span> Student
+        </label>
+      </div>
+
+      <form id="login-form">
+        <label class="field-label" for="login-username">Username:</label>
+        <div class="input-wrap">
+          <span class="input-icon">👤</span>
+          <input type="text" id="login-username" placeholder="Username" autocomplete="username" required />
+        </div>
+
+        <label class="field-label" for="login-password">Password:</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="login-password" placeholder="Enter Password" autocomplete="current-password" required />
+        </div>
+
+        <p id="login-error" class="error-text"></p>
+
+        <button type="submit" class="btn btn-gold btn-full" id="btn-submit-login">Login</button>
+      </form>
+
+      <button class="link-btn" id="btn-forgot-password" type="button">Forgot password?</button>
+
+      <div class="hint-box">
+        <strong>Demo accounts</strong> (real accounts, seeded into the actual database):<br />
+        Admin &nbsp;→ admin01 / Admin@123<br />
+        Teacher → teacher01 / Teacher@123<br />
+        Student → TU-BCA-2025-002 / TU-BCA-2025-002@123 &nbsp;(temporary password → forces change)
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PAGE 4: FORCED PASSWORD CHANGE
+       Shown only when the backend reports first_login = true
+       ============================================================ -->
+  <section id="page-change-password" class="page">
+    <div class="backdrop"></div>
+    <div class="login-card">
+      <div class="brand">
+        <span class="logo-inline">🔑</span>
+        <span class="brand-title brand-title-sm">Set a New Password</span>
+      </div>
+      <p class="login-subtitle">
+        This is your first login. For security, you must set a new
+        password before continuing.
+      </p>
+
+      <form id="change-password-form">
+        <label class="field-label" for="old-password">Current (temporary) password:</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="old-password" placeholder="Temporary password" required />
+        </div>
+
+        <label class="field-label" for="new-password">New password:</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="new-password" placeholder="At least 8 characters, incl. a number" required />
+        </div>
+
+        <label class="field-label" for="confirm-password">Confirm new password:</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="confirm-password" placeholder="Re-enter new password" required />
+        </div>
+
+        <p id="change-password-error" class="error-text"></p>
+
+        <button type="submit" class="btn btn-gold btn-full">Change Password &amp; Continue</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PAGE 5: PLACEHOLDER (dashboard comes in the next build step)
+       ============================================================ -->
+  <section id="page-welcome" class="page">
+    <div class="backdrop"></div>
+    <div class="content-center">
+      <div class="brand brand-lg">
+        <div class="logo logo-lg">✅</div>
+        <div>
+          <h1 class="brand-title" id="welcome-title">Logged in</h1>
+          <p class="brand-subtitle" id="welcome-subtitle">Dashboard loads here next</p>
+        </div>
+      </div>
+      <button class="btn btn-outline" id="btn-logout">Logout</button>
+    </div>
+  </section>
+
+  <!-- Separate JS file, linked here -->
+  <!-- Shared API helper (CSRF + fetch wrapper), then page logic -->
+  <script src="js/api.js"></script>
+  <script src="js/script.js"></script>
+</body>
+</html>
