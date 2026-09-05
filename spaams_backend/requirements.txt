@@ -1,0 +1,9 @@
+# Django 5.2 LTS supports the installed MySQL 8.0 server.
+Django>=5.2,<6.0
+djangorestframework>=3.15
+django-cors-headers>=4.4
+pandas
+numpy
+matplotlib
+plotly
+PyMySQL>=1.1
