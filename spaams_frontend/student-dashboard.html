@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SPAAMS - Student Dashboard</title>
-  <link rel="stylesheet" href="css/student.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/student.css?v=20261001-professional-ui" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700;900&display=swap" rel="stylesheet" />
 </head>
 <body>
 
@@ -18,27 +18,23 @@
          ============================================================ -->
     <aside class="s-sidebar">
       <div class="s-brand">
-        <span class="s-logo">🎓</span>
-        <div>
-          <div class="s-brand-title">SPAAMS</div>
-          <div class="s-brand-sub">Student Performance Analytics &amp; Attendance Monitoring System</div>
-        </div>
+        <img class="s-brand-logo" src="assets/spaams-logo.png?v=20261001-text-logo" alt="SPAAMS logo" />
       </div>
 
       <nav class="s-nav">
         <button class="s-nav-item active" data-menu="dashboard">
-          <span class="s-nav-icon">🏠</span> Dashboard
+          <span class="s-nav-icon" aria-hidden="true">01</span> Dashboard
         </button>
        
         <button class="s-nav-item" id="btn-student-logout">
-          <span class="s-nav-icon">🚪</span> Logout
+          <span class="s-nav-icon" aria-hidden="true">↗</span> Logout
         </button>
       </nav>
 
-      <button class="s-home-btn" id="btn-student-home" title="Dashboard home">🏠</button>
+      <button class="s-home-btn" id="btn-student-home" title="Dashboard home" aria-label="Dashboard home">←</button>
 
       <div class="s-date-card">
-        <div class="s-date-icon">📅</div>
+        <div class="s-date-icon" aria-hidden="true">D</div>
         <div>
           <div class="s-date-label">Today's Date</div>
           <div class="s-date-value" id="s-today-date">–</div>
@@ -64,13 +60,13 @@
             <label class="s-semester-label">Semester:</label>
             <select id="s-semester-select"></select>
 
-            <button class="s-bell-btn" id="s-bell-btn">
-              🔔<span class="s-bell-badge" id="s-bell-count">0</span>
+            <button class="s-bell-btn" id="s-bell-btn" aria-label="Notifications">
+              <span aria-hidden="true">N</span><span class="s-bell-badge" id="s-bell-count">0</span>
             </button>
             <div class="s-notif-menu" id="s-notif-menu"></div>
 
             <button class="s-profile-btn" id="s-profile-btn">
-              <span class="s-avatar">🙂</span>
+              <span class="s-avatar" aria-hidden="true">S</span>
               <span id="s-profile-name">Student</span>
               <span class="s-caret">▾</span>
             </button>
@@ -91,8 +87,8 @@
           <div class="s-grid-2">
             <div class="s-card s-profile-card">
               <div class="s-avatar-lg">
-                <span>🙂</span>
-                <span class="s-avatar-edit">📷</span>
+                <span aria-hidden="true">S</span>
+                <span class="s-avatar-edit" aria-hidden="true">Edit</span>
               </div>
               <div class="s-profile-name-lg" id="p-full-name">–</div>
               <div class="s-profile-meta" id="p-student-id">–</div>
@@ -116,7 +112,7 @@
             <div class="s-table-scroll">
               <table class="s-data-table">
                 <thead>
-                  <tr><th>Semester</th><th>Name</th><th>Student ID</th><th>Board Exam Marks (%)</th><th>CGPA</th></tr>
+                  <tr><th>Semester</th><th>Name</th><th>Student ID</th><th>Board GPA</th><th>CGPA</th></tr>
                 </thead>
                 <tbody id="a-academic-body"></tbody>
               </table>
@@ -124,34 +120,34 @@
           </div>
 
           <div class="s-card" style="margin-bottom:20px;">
-            <div class="s-card-title">Academic Progress (Board Exam Marks %)</div>
-            <div id="a-progress-chart" class="s-chart-box"></div>
+            <div class="s-card-title">Academic Progress (Board GPA)</div>
+            <div class="s-chart-box"><canvas id="a-progress-chart" aria-label="Academic progress by semester"></canvas></div>
           </div>
 
           <div class="s-stat-row">
             <div class="s-mini-stat">
-              <div class="s-mini-stat-icon" style="background:#eef1ff;">📈</div>
+              <div class="s-mini-stat-icon" style="background:#eef1ff;">A</div>
               <div>
                 <div class="s-mini-stat-label" id="a-avg-label">Avg. Marks</div>
                 <div class="s-mini-stat-value" id="a-avg-value">–</div>
               </div>
             </div>
             <div class="s-mini-stat">
-              <div class="s-mini-stat-icon" style="background:#eafaf1;">🏅</div>
+              <div class="s-mini-stat-icon" style="background:#eafaf1;">B</div>
               <div>
                 <div class="s-mini-stat-label">Best Subject</div>
                 <div class="s-mini-stat-value" id="a-best-subject">–</div>
               </div>
             </div>
             <div class="s-mini-stat">
-              <div class="s-mini-stat-icon" style="background:#fdeeee;">📉</div>
+              <div class="s-mini-stat-icon" style="background:#fdeeee;">L</div>
               <div>
                 <div class="s-mini-stat-label">Lowest Subject</div>
                 <div class="s-mini-stat-value" id="a-lowest-subject">–</div>
               </div>
             </div>
             <div class="s-mini-stat">
-              <div class="s-mini-stat-icon" style="background:#fff6e6;">🎓</div>
+              <div class="s-mini-stat-icon" style="background:#fff6e6;">AT</div>
               <div>
                 <div class="s-mini-stat-label">Attendance</div>
                 <div class="s-mini-stat-value" id="a-attendance-value">–</div>
@@ -167,8 +163,8 @@
           <div class="s-grid-topcards">
             <div class="s-card s-mini-profile">
               <div class="s-avatar-lg small">
-                <span>🙂</span>
-                <span class="s-avatar-edit">📷</span>
+                <span aria-hidden="true">S</span>
+                <span class="s-avatar-edit" aria-hidden="true">Edit</span>
               </div>
               <div class="s-profile-name-lg" id="c-full-name">–</div>
               <div class="s-profile-meta" id="c-student-id">–</div>
@@ -177,7 +173,7 @@
             </div>
 
             <div class="s-card s-stat-card">
-              <div class="s-stat-icon" style="background:#eef1ff;color:#4f6df5;">📅</div>
+              <div class="s-stat-icon" style="background:#eef1ff;color:#4f6df5;">P</div>
               <div class="s-stat-label">Present Days</div>
               <div class="s-stat-value" id="c-present-days">–</div>
               <div class="s-stat-sub good" id="c-present-pct">–</div>
@@ -185,7 +181,7 @@
             </div>
 
             <div class="s-card s-stat-card">
-              <div class="s-stat-icon" style="background:#eafaf1;color:#2fbf71;">🕐</div>
+              <div class="s-stat-icon" style="background:#eafaf1;color:#2fbf71;">T</div>
               <div class="s-stat-label">Total Days</div>
               <div class="s-stat-value" id="c-total-days">–</div>
               <div class="s-stat-sub good">100%</div>
@@ -193,7 +189,7 @@
             </div>
 
             <div class="s-card s-stat-card">
-              <div class="s-stat-icon" style="background:#fdeeee;color:#e5566d;">⏰</div>
+              <div class="s-stat-icon" style="background:#fdeeee;color:#e5566d;">A</div>
               <div class="s-stat-label">Absent Days</div>
               <div class="s-stat-value" id="c-absent-days">–</div>
               <div class="s-stat-sub bad" id="c-absent-pct">–</div>
@@ -201,7 +197,7 @@
             </div>
 
             <div class="s-card s-current-sem-card">
-              <div class="s-stat-icon" style="background:#fff6e6;color:#e0a324;">🎓</div>
+              <div class="s-stat-icon" style="background:#fff6e6;color:#e0a324;">S</div>
               <div class="s-stat-label">Current Semester</div>
               <div class="s-stat-value" id="c-current-sem" style="font-size:18px;">–</div>
               <div class="s-profile-meta" id="c-program-2">–</div>
@@ -209,7 +205,7 @@
             </div>
 
             <div class="s-card s-top-scorer-card">
-              <div class="s-stat-icon" style="background:#f1ecff;color:#8a5cf6;">🏆</div>
+              <div class="s-stat-icon" style="background:#f1ecff;color:#8a5cf6;">#</div>
               <div class="s-stat-label">Top Scorer</div>
               <div style="font-size:12px;color:#8894a6;">You are in</div>
               <div class="s-top-badge" id="c-top-rank-band">–</div>
@@ -219,7 +215,7 @@
 
           <div class="s-alert-row">
             <div class="s-card s-alert-card" id="c-attendance-alert">
-              <div class="s-alert-icon">⚠️</div>
+              <div class="s-alert-icon" aria-hidden="true">!</div>
               <div style="flex:1;">
                 <div class="s-alert-title">Attendance Alert!</div>
                 <div class="s-alert-text" id="c-alert-text">–</div>
@@ -246,17 +242,17 @@
               <table class="s-data-table">
                 <thead>
                   <tr>
-                    <th>Subject</th><th>Unit Test (/20)</th><th>Assignment (/10)</th><th>Preboard (/40)</th>
-                    <th>Lab (/20)</th><th>Attendance (%)</th><th>Grooming (/10)</th><th>Overall Activities (/10)</th><th>Total (/120)</th>
+                    <th>Subject</th><th>Assignments (/10)</th><th>Unit Tests (/10)</th><th>Attendance (/15)</th><th>Grooming (/5)</th>
+                    <th>Midterm (/20)</th><th>Lab Reports (/5)</th><th>Overall Activities (/5)</th><th>Preboard (/30)</th><th>Total (/100)</th>
                   </tr>
                 </thead>
-                <tbody id="c-class-perf-body"></tbody>
+                    <tbody id="c-class-perf-body"></tbody>
               </table>
             </div>
           </div>
 
           <div class="s-card">
-            <div class="s-card-title">Subject Wise Marks (Total /120)</div>
+            <div class="s-card-title">Subject Wise Marks (Total /100)</div>
             <div id="c-subject-bar-chart" class="s-chart-box"></div>
           </div>
 
@@ -290,7 +286,8 @@
     </div>
   </div>
 
-  <script src="js/api.js"></script>
-  <script src="js/student.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="js/api.js?v=20260930-sms-pasal-live"></script>
+  <script src="js/student.js?v=20260930-student-marks-100"></script>
 </body>
 </html>

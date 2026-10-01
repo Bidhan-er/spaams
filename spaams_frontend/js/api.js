@@ -12,8 +12,9 @@
    ========================================================== */
 
 // Change this if your backend runs somewhere else.
-// SPAAMS uses 8001 so it does not conflict with another local Django project.
-const API_BASE = "http://127.0.0.1:8001/api";
+// Use the current SPAAMS backend process. It reads the local SMS Pasal
+// configuration from spaams_backend/.env when it starts.
+const API_BASE = "http://127.0.0.1:8004/api";
 
 /**
  * Reads the csrftoken cookie Django sets. Returns "" if it hasn't
@@ -63,6 +64,12 @@ async function apiFetch(path, { method = "GET", body } = {}) {
   }
 
   if (!response.ok) {
+    if (!path.startsWith("/auth/") && (response.status === 401 || (response.status === 403 && /authentication credentials/i.test(data?.detail || data?.message || "")))) {
+      const error = new Error("Your login session has expired. Please log out and sign in as Admin again.");
+      error.status = response.status;
+      error.data = data;
+      throw error;
+    }
     const fieldMessages = data && typeof data === "object"
       ? Object.entries(data).filter(([key]) => !["message", "detail"].includes(key)).map(([key, value]) => `${key.replaceAll("_", " ")}: ${Array.isArray(value) ? value.join(" ") : value}`).join("\n")
       : "";
@@ -95,6 +102,10 @@ async function apiLogout() {
 
 async function apiRequestPasswordReset(username) {
   return apiFetch("/auth/forgot-password/", { method: "POST", body: { username } });
+}
+
+async function apiVerifyPasswordResetOtp(username, otp) {
+  return apiFetch("/auth/verify-reset-otp/", { method: "POST", body: { username, otp } });
 }
 
 async function apiConfirmPasswordReset(username, otp, newPassword, confirmPassword) {

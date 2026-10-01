@@ -23,7 +23,9 @@ enforcement your project doc calls for in section 19 ("This is
 enforced by the backend, not just by hiding UI buttons.")
 """
 
+import logging
 import secrets
+from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.core.mail import send_mail
 from django.middleware.csrf import get_token
@@ -33,14 +35,18 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import PasswordReset, Student, Teacher, UserLogin
+from .models import Admin, PasswordReset, Student, Teacher, UserLogin
+from .bootstrap import DEFAULT_ADMIN_USERNAME, ensure_default_admin
 from .serializers import (
     ChangePasswordSerializer,
     LoginSerializer,
     StudentSerializer,
     TeacherSerializer,
 )
-from academics.models import TeacherAssignment
+from academics.models import StudentEnrollment, TeacherAssignment
+
+
+logger = logging.getLogger(__name__)
 
 
 class IsAdminRole(permissions.BasePermission):
@@ -55,6 +61,41 @@ class IsAdminRole(permissions.BasePermission):
             request.user.is_authenticated
             and request.user.role == "Admin"
         )
+
+
+class AdminProfileView(APIView):
+    """The signed-in admin may view and change only their displayed name."""
+    permission_classes = [IsAdminRole]
+
+    def get(self, request):
+        profile = Admin.objects.get(user=request.user)
+        return Response({"full_name": profile.full_name})
+
+    def patch(self, request):
+        full_name = str(request.data.get("full_name", "")).strip()
+        if not full_name:
+            return Response({"message": "Enter an admin name."}, status=status.HTTP_400_BAD_REQUEST)
+        if len(full_name) > 100:
+            return Response({"message": "Admin name must be 100 characters or fewer."}, status=status.HTTP_400_BAD_REQUEST)
+        profile = Admin.objects.get(user=request.user)
+        profile.full_name = full_name
+        profile.save(update_fields=["full_name"])
+        return Response({"full_name": profile.full_name})
+
+
+class GraduatedStudentCountView(APIView):
+    """Count graduates without adding them back to the active student roster."""
+
+    permission_classes = [IsAdminRole]
+
+    def get(self, request):
+        graduated_count = (
+            Student.objects.filter(enrollments__status="Graduated")
+            .exclude(enrollments__status="Active")
+            .distinct()
+            .count()
+        )
+        return Response({"count": graduated_count})
 
 
 class IsTeacherRole(permissions.BasePermission):
@@ -101,6 +142,11 @@ class LoginView(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
+        # Recover exactly one account after a database is manually emptied.
+        # Existing Admin accounts, including changed passwords, are untouched.
+        if data["role"] == "Admin" and data["username"] == DEFAULT_ADMIN_USERNAME:
+            ensure_default_admin()
+
         user = UserLogin.objects.filter(username=data["username"]).first()
 
         if user is None:
@@ -117,7 +163,7 @@ class LoginView(APIView):
 
         if user.status == "Disabled":
             return Response(
-                {"success": False, "message": "Your account is disabled. Please consult the admin to enable it. Contact: 9842612731."},
+                {"success": False, "message": "Your account is disabled. Please consult the admin (Bidhan) to enable it. Contact: 9842612731."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -167,7 +213,8 @@ class ChangePasswordView(APIView):
 
         user.set_password(data["new_password"])
         user.first_login = False
-        user.save(update_fields=["password_hash", "first_login"])
+        user.temp_password_plain = None
+        user.save(update_fields=["password_hash", "first_login", "temp_password_plain"])
 
         return Response({"success": True, "message": "Password updated."})
 
@@ -179,18 +226,45 @@ class PasswordResetRequestView(APIView):
     def post(self, request):
         username = (request.data.get("username") or "").strip()
         user = UserLogin.objects.filter(username=username).first()
-        if user:
-            email = self._email_for_user(user)
-            if not email:
-                return Response({"success": True, "message": "If the account has an email address, a reset code has been sent."})
-            PasswordReset.objects.filter(user=user, verified=False).delete()
-            otp = f"{secrets.randbelow(1_000_000):06d}"
-            PasswordReset.objects.create(user=user, otp=otp, expiry_time=timezone.now() + timedelta(minutes=15))
-            # Development can run without SMTP; production delivery is enabled
-            # by configuring EMAIL_* environment variables.
-            send_mail("SPAAMS password reset", f"Your SPAAMS reset code is {otp}. It expires in 15 minutes.", None, [email], fail_silently=True)
-        # Identical response prevents email/username enumeration.
-        return Response({"success": True, "message": "If the account has an email address, a reset code has been sent."})
+        if not user:
+            # Do not reveal whether an account exists.
+            return Response({"success": True, "message": "If the account has a registered email address, a reset code has been sent."})
+
+        email = self._email_for_user(user)
+        if not email:
+            return Response({"success": False, "message": "No registered email address is available for this account. Contact the administrator."}, status=400)
+
+        # A new request invalidates every earlier reset code for this user.
+        PasswordReset.objects.filter(user=user).delete()
+        otp = f"{secrets.randbelow(1_000_000):06d}"
+        expiry_minutes = settings.PASSWORD_RESET_OTP_EXPIRY_MINUTES
+        reset = PasswordReset.objects.create(
+            user=user,
+            otp=otp,
+            expiry_time=timezone.now() + timedelta(minutes=expiry_minutes),
+        )
+        try:
+            delivered = send_mail(
+                "SPAAMS password reset",
+                f"Your SPAAMS reset code is {otp}. It expires in {expiry_minutes} minutes.",
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+            if delivered != 1:
+                raise RuntimeError("The email provider did not accept the reset message.")
+        except Exception:
+            reset.delete()
+            logger.exception("SPAAMS password-reset email delivery failed for login_id=%s", user.id)
+            return Response({"success": False, "message": "The reset email could not be delivered. Check the SMTP settings or contact the administrator."}, status=503)
+
+        if settings.EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend":
+            return Response({"success": True, "delivery_mode": "console", "email": email,
+                             "expires_in_seconds": expiry_minutes * 60,
+                             "message": f"Development mode: the reset code was printed in the backend terminal. It was not sent to {email}. Configure SMTP to deliver real email."})
+        return Response({"success": True, "delivery_mode": "email", "email": email,
+                         "expires_in_seconds": expiry_minutes * 60,
+                         "message": f"Check your registered email address, {email}, for the six-digit reset code."})
 
     @staticmethod
     def _email_for_user(user):
@@ -218,14 +292,38 @@ class PasswordResetConfirmView(APIView):
         except Exception as exc:
             return Response({"message": " ".join(exc.messages)}, status=400)
         user = UserLogin.objects.filter(username=username).first()
-        reset = PasswordReset.objects.filter(user=user, otp=otp, verified=False, expiry_time__gte=timezone.now()).order_by("-created_at").first() if user else None
+        # The OTP must have been checked at /auth/verify-reset-otp/ first.
+        reset = PasswordReset.objects.filter(user=user, otp=otp, verified=True, expiry_time__gte=timezone.now()).order_by("-created_at").first() if user else None
         if not reset:
-            return Response({"message": "The reset code is invalid or expired."}, status=400)
+            return Response({"message": "Verify a valid reset code before setting a new password."}, status=400)
         user.set_password(password)  # Django hashes using PBKDF2; no plaintext is stored.
-        user.save(update_fields=["password_hash"])
+        # A reset replaces the initial password too, so remove its plaintext
+        # copy and prevent a later forced first-login reset.
+        user.first_login = False
+        user.temp_password_plain = None
+        user.save(update_fields=["password_hash", "first_login", "temp_password_plain"])
+        reset.delete()  # The verified OTP must not be reusable.
+        return Response({"success": True, "message": "Password reset successfully."})
+
+
+class PasswordResetOtpVerifyView(APIView):
+    """Verifies the OTP before the browser may display password fields."""
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        username = (request.data.get("username") or "").strip()
+        otp = (request.data.get("otp") or "").strip()
+        if not username or not otp:
+            return Response({"message": "Username and the 6-digit reset code are required."}, status=400)
+        user = UserLogin.objects.filter(username=username).first()
+        reset = PasswordReset.objects.filter(
+            user=user, otp=otp, verified=False, expiry_time__gte=timezone.now()
+        ).order_by("-created_at").first() if user else None
+        if not reset:
+            return Response({"message": "The reset code is invalid or expired. Request a new code and try again."}, status=400)
         reset.verified = True
         reset.save(update_fields=["verified"])
-        return Response({"success": True, "message": "Password reset successfully."})
+        return Response({"success": True, "message": "Code verified. Choose a new password."})
 
 
 class LogoutView(APIView):
@@ -246,7 +344,11 @@ class TeacherMeView(APIView):
         return Response({"id": teacher.id, "full_name": teacher.teacher_name, "gender": teacher.gender,
                          "assignments": [{"id": a.id, "subject_id": a.subject_id, "subject_name": a.subject.subject_name,
                                            "semester_id": a.semester_id, "semester_number": a.semester.semester_number,
-                                           "academic_year": a.academic_year} for a in assignments]})
+                                           "academic_year": a.academic_year,
+                                           "student_count": StudentEnrollment.objects.filter(
+                                               semester=a.semester, academic_year=a.academic_year,
+                                               status="Active", student__status="Active"
+                                           ).count()} for a in assignments]})
 
 
 class StudentMeView(APIView):
@@ -256,6 +358,8 @@ class StudentMeView(APIView):
     def get(self, request):
         from academics.models import StudentEnrollment
         from assessment.models import BoardMarks, StudentMarks
+        from assessment.performance import student_performance
+        from academics.models import Subject
         from attendance.models import Attendance
 
         student = Student.objects.select_related("guardian", "user").get(user=request.user)
@@ -272,30 +376,46 @@ class StudentMeView(APIView):
         for row in board_marks:
             bucket = board_by_semester.setdefault(row.subject.semester_id, [0.0, 0.0])
             bucket[0] += float(row.marks_obtained)
-            bucket[1] += float(row.maximum_marks)
+            bucket[1] += 1
         semester_summary, class_performance = {}, {}
         for enrollment in enrollments:
             sem = enrollment.semester
             att = attendance_by_semester.get(sem.id, {"present": 0, "total": 0})
             board = board_by_semester.get(sem.id)
             semester_summary[sem.semester_number] = {"present": att["present"], "total": att["total"],
-                "boardMarks": round(board[0] * 100 / board[1], 2) if board and board[1] else None, "cgpa": None}
-            subject_rows = {}
-            for mark in marks.filter(subject__semester=sem):
-                row = subject_rows.setdefault(mark.subject_id, {"subject": mark.subject.subject_name, "unitTest": 0, "assignment": 0, "preboard": 0, "lab": None, "grooming": 0, "overall": 0})
-                name = mark.assessment.assessment_name.lower()
-                value = float(mark.marks_obtained)
-                if "unit" in name: row["unitTest"] += value
-                elif "assignment" in name: row["assignment"] += value
-                elif "pre" in name or "mid" in name: row["preboard"] += value
-                elif "lab" in name: row["lab"] = (row["lab"] or 0) + value
-                elif "groom" in name: row["grooming"] += value
-                else: row["overall"] += value
-            total_attendance = Attendance.objects.filter(student=student, session__semester=sem).count()
-            present_attendance = Attendance.objects.filter(student=student, session__semester=sem, status="Present").count()
-            for row in subject_rows.values():
-                row["attendance"] = round((present_attendance * 100 / total_attendance), 2) if total_attendance else 0
-            class_performance[sem.semester_number] = list(subject_rows.values())
+                "boardMarks": round(board[0] / board[1], 2) if board and board[1] else None, "cgpa": None}
+            subject_rows = []
+            for subject in Subject.objects.filter(semester=sem).order_by("subject_name"):
+                performance = student_performance(student.id, subject.id, enrollment.academic_year, sem.id)
+                categories = performance["categories"]
+                # Student-facing values are only marks actually entered by an
+                # Admin/Teacher.  They use the same permanent 100-point
+                # breakdown as the Admin and Teacher panels.
+                displayed = {name: categories[name].get("display_contribution") for name in categories}
+                entered_values = [value for value in displayed.values() if value is not None]
+                subject_rows.append({
+                    "subject": subject.subject_name,
+                    "assignment": displayed["Assignments"],
+                    "unitTest": displayed["Unit Tests"],
+                    "attendance": displayed["Attendance"],
+                    "grooming": displayed["Grooming"],
+                    "midterm": displayed["Midterm"],
+                    "lab": displayed["Lab Reports"],
+                    "overall": displayed["Overall Activities"],
+                    "preboard": displayed["Preboard"],
+                    "total": round(sum(entered_values), 2) if entered_values else None,
+                    "has_entered_marks": bool(entered_values),
+                })
+            class_performance[sem.semester_number] = subject_rows
+        # Board GPA is the average of the Board GPA values entered by Admin
+        # for that semester. CGPA is the cumulative average across semesters
+        # that have a Board GPA; it does not alter the 100-mark performance.
+        completed_gpas = []
+        for semester_number in sorted(semester_summary):
+            board_gpa = semester_summary[semester_number]["boardMarks"]
+            if board_gpa is not None:
+                completed_gpas.append(board_gpa)
+            semester_summary[semester_number]["cgpa"] = round(sum(completed_gpas) / len(completed_gpas), 2) if completed_gpas else None
         notifications = []
         active_enrollment = enrollments.last()
         if active_enrollment:
@@ -328,14 +448,22 @@ class StudentViewSet(viewsets.ModelViewSet):
     via DRF's router (see accounts/urls.py).
     """
 
-    queryset = Student.objects.select_related("guardian").all()
     serializer_class = StudentSerializer
     permission_classes = [IsAdminRole]
+
+    def get_queryset(self):
+        # The current-student dashboard must not mix graduated or archived
+        # students into active class, attendance, and marks workflows.
+        return (
+            Student.objects.select_related("guardian", "user")
+            .filter(enrollments__status="Active")
+            .distinct()
+        )
 
 
 class TeacherViewSet(viewsets.ModelViewSet):
     """Powers the Admin panel's Manage Teachers screen."""
 
-    queryset = Teacher.objects.all()
+    queryset = Teacher.objects.select_related("user").all()
     serializer_class = TeacherSerializer
     permission_classes = [IsAdminRole]

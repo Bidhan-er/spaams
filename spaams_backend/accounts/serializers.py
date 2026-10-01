@@ -6,11 +6,15 @@ Python objects <-> JSON, and validating incoming data. Think of
 each serializer as "the shape of one API request or response."
 """
 
+import secrets
+
 from django.contrib.auth.password_validation import validate_password
+from django.db.models import Sum
 from rest_framework import serializers
 
 from .models import Admin, Student, Teacher, UserLogin
 from academics.models import Faculty, Guardian, Semester, StudentEnrollment
+from assessment.models import BoardMarks
 
 
 class LoginSerializer(serializers.Serializer):
@@ -64,6 +68,12 @@ class StudentSerializer(serializers.ModelSerializer):
     faculty = serializers.SerializerMethodField(read_only=True)
     current_semester_number = serializers.SerializerMethodField(read_only=True)
     current_academic_year = serializers.SerializerMethodField(read_only=True)
+    batch = serializers.SerializerMethodField(read_only=True)
+    board_gpa = serializers.SerializerMethodField(read_only=True)
+    first_login = serializers.BooleanField(source="user.first_login", read_only=True)
+    account_status = serializers.CharField(source="user.status", read_only=True)
+    temp_password_plain = serializers.SerializerMethodField(read_only=True)
+    temporary_password_status = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Student
@@ -94,23 +104,79 @@ class StudentSerializer(serializers.ModelSerializer):
             "faculty",
             "current_semester_number",
             "current_academic_year",
+            "batch",
+            "board_gpa",
+            "first_login",
+            "account_status",
+            "temp_password_plain",
+            "temporary_password_status",
         ]
 
+    def _may_view_temporary_password(self):
+        request = self.context.get("request")
+        return bool(request and request.user.is_authenticated and request.user.role == "Admin")
+
+    def get_temp_password_plain(self, student):
+        user = student.user
+        if not self._may_view_temporary_password() or not user.first_login:
+            return None
+        return user.temp_password_plain
+
+    def get_temporary_password_status(self, student):
+        user = student.user
+        if not user.first_login:
+            return "Password already changed."
+        if not self._may_view_temporary_password():
+            return None
+        return "Temporary password available." if user.temp_password_plain else "Temporary password unavailable. Reset the account password."
+
+    def _display_enrollment(self, student):
+        """Use the active enrollment, or the latest saved enrollment for graduates."""
+        return (
+            student.enrollments.filter(status="Active").select_related("faculty", "semester").order_by("-academic_year").first()
+            or student.enrollments.select_related("faculty", "semester").order_by("-academic_year").first()
+        )
+
     def get_semester(self, student):
-        enrollment = student.enrollments.filter(status="Active").select_related("semester").order_by("-academic_year").first()
+        enrollment = self._display_enrollment(student)
         return enrollment.semester.semester_name if enrollment else None
 
     def get_faculty(self, student):
-        enrollment = student.enrollments.filter(status="Active").select_related("faculty").order_by("-academic_year").first()
+        enrollment = self._display_enrollment(student)
         return enrollment.faculty.faculty_name if enrollment else None
 
     def get_current_semester_number(self, student):
-        enrollment = student.enrollments.filter(status="Active").select_related("semester").order_by("-academic_year").first()
+        enrollment = self._display_enrollment(student)
         return enrollment.semester.semester_number if enrollment else None
 
     def get_current_academic_year(self, student):
-        enrollment = student.enrollments.filter(status="Active").order_by("-academic_year").first()
+        enrollment = self._display_enrollment(student)
         return enrollment.academic_year if enrollment else None
+
+    def _active_enrollment(self, student):
+        return self._display_enrollment(student)
+
+    @staticmethod
+    def _gpa_from_board_marks(queryset):
+        totals = queryset.aggregate(obtained=Sum("marks_obtained"), maximum=Sum("maximum_marks"))
+        if not totals["maximum"]:
+            return None
+        return round(float(totals["obtained"] / totals["maximum"]), 2)
+
+    def get_batch(self, student):
+        enrollment = self._active_enrollment(student)
+        return enrollment.academic_year if enrollment else None
+
+    def get_board_gpa(self, student):
+        """Current-semester Board GPA, shown only after board results are entered."""
+        enrollment = self._active_enrollment(student)
+        if not enrollment:
+            return None
+        return self._gpa_from_board_marks(BoardMarks.objects.filter(
+            student=student,
+            subject__semester=enrollment.semester,
+            academic_year=enrollment.academic_year,
+        ))
 
     def validate_registration_number(self, value):
         query = Student.objects.filter(registration_number=value)
@@ -137,11 +203,12 @@ class StudentSerializer(serializers.ModelSerializer):
         if not guardian_name or not guardian_phone or not semester_number or not academic_year:
             raise serializers.ValidationError("Guardian details, semester, and academic year are required.")
 
-        # Temporary password policy — in production this could be
-        # randomly generated and emailed/SMSed instead of hardcoded.
-        temporary_password = f"{validated_data['registration_number']}@123"
+        # The same temporary value is stored as a PBKDF2 hash for login and
+        # briefly as plaintext for the admin to hand to the new student.
+        temporary_password = f"Spaams!{secrets.token_urlsafe(9)}"
 
-        user = UserLogin(username=username, role="Student", first_login=True, status="Active")
+        account_status = "Disabled" if validated_data.get("status") == "Disabled" else "Active"
+        user = UserLogin(username=username, role="Student", first_login=True, status=account_status, temp_password_plain=temporary_password)
         user.set_password(temporary_password)
         user.save()
         guardian = Guardian.objects.create(guardian_name=guardian_name, phone=guardian_phone, email=guardian_email or None)
@@ -199,6 +266,10 @@ class TeacherSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=False)
     login_id = serializers.IntegerField(source="user_id", read_only=True)
     username_display = serializers.CharField(source="user.username", read_only=True)
+    first_login = serializers.BooleanField(source="user.first_login", read_only=True)
+    account_status = serializers.CharField(source="user.status", read_only=True)
+    temp_password_plain = serializers.SerializerMethodField(read_only=True)
+    temporary_password_status = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Teacher
@@ -206,6 +277,8 @@ class TeacherSerializer(serializers.ModelSerializer):
             "id",
             "login_id",
             "username_display",
+            "first_login",
+            "account_status",
             "teacher_name",
             "gender",
             "phone",
@@ -214,7 +287,27 @@ class TeacherSerializer(serializers.ModelSerializer):
             "status",
             "username",
             "email",
+            "temp_password_plain",
+            "temporary_password_status",
         ]
+
+    def _may_view_temporary_password(self):
+        request = self.context.get("request")
+        return bool(request and request.user.is_authenticated and request.user.role == "Admin")
+
+    def get_temp_password_plain(self, teacher):
+        user = teacher.user
+        if not self._may_view_temporary_password() or not user.first_login:
+            return None
+        return user.temp_password_plain
+
+    def get_temporary_password_status(self, teacher):
+        user = teacher.user
+        if not user.first_login:
+            return "Password already changed."
+        if not self._may_view_temporary_password():
+            return None
+        return "Temporary password available." if user.temp_password_plain else "Temporary password unavailable. Reset the account password."
 
     def validate_username(self, value):
         query = UserLogin.objects.filter(username=value)
@@ -232,9 +325,10 @@ class TeacherSerializer(serializers.ModelSerializer):
             # for now, slugify the teacher name
             username = validated_data["teacher_name"].split(" ")[0].lower()
 
-        temporary_password = "Teacher@123"
+        temporary_password = f"Spaams!{secrets.token_urlsafe(9)}"
         user = UserLogin(username=username, role="Teacher", first_login=True,
-                         status="Active" if validated_data.get("status", "Active") == "Active" else "Disabled")
+                         status="Active" if validated_data.get("status", "Active") == "Active" else "Disabled",
+                         temp_password_plain=temporary_password)
         user.set_password(temporary_password)
         user.save()
         validated_data["email"] = email

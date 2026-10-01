@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SPAAMS - Teacher Dashboard</title>
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/admin.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/admin.css?v=20261001-sidebar-logo-centered" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700;900&display=swap" rel="stylesheet" />
 </head>
 <body class="admin-body">
 
@@ -15,10 +15,8 @@
     <!-- SIDEBAR — same structure/colors as the Admin panel -->
     <aside class="sidebar">
       <div class="sidebar-brand">
-        <span class="logo-inline">🎓</span>
-        <span class="sidebar-title">SPAAMS</span>
+        <img class="sidebar-brand-logo" src="assets/spaams-logo.png?v=20261001-text-logo" alt="SPAAMS logo" />
       </div>
-      <p class="sidebar-tagline">Students Performance Analytic and attendance Monitoring System</p>
 
       <nav class="sidebar-menu">
         <button class="menu-item active" data-menu="semester-details">Semester-wise Details <span class="dot"></span></button>
@@ -26,13 +24,14 @@
         <button class="menu-item" data-menu="attendance-monitoring">Attendance Monitoring <span class="dot"></span></button>
       </nav>
 
-      <button class="btn-home-sidebar" id="btn-teacher-home" title="Back one step">🏠</button>
+      <button type="button" class="btn-sidebar-logout" id="btn-teacher-logout">Logout</button>
+      <button class="btn-home-sidebar" id="btn-teacher-home" title="Back one step" aria-label="Back">←</button>
     </aside>
 
     <!-- MAIN CONTENT PANE -->
     <main class="content-pane">
       <div class="teacher-profile-chip" aria-label="Logged-in teacher">
-        <span id="teacher-profile-avatar" class="teacher-profile-avatar">👤</span>
+        <span id="teacher-profile-avatar" class="teacher-profile-avatar" aria-hidden="true">T</span>
         <span id="teacher-profile-name">Teacher</span>
       </div>
 
@@ -44,6 +43,8 @@
           <div class="search-row">
             <label class="search-label">Search:</label>
             <input type="text" id="teacher-marks-search" placeholder="Search student....." autocomplete="off" />
+            <label class="search-label" for="teacher-status-filter">Status:</label>
+            <select id="teacher-status-filter"><option value="all">All</option><option value="pass">Pass</option><option value="fail">Fail</option></select>
             <span id="teacher-search-count" class="search-count"></span>
           </div>
         </div>
@@ -65,10 +66,11 @@
         <p id="teacher-empty-state" class="teacher-empty-state" style="display:none;"></p>
 
         <div class="column-manager-row">
-          <label class="selector-label">Add column:</label>
+          <label class="selector-label">Add sub-column:</label>
+          <select id="new-column-category"><option value="Unit Tests">Unit Tests</option><option value="Assignments">Assignments</option><option value="Lab Reports">Lab Reports</option></select>
           <input type="text" id="new-column-name" placeholder="e.g. Unit Test" />
           <button class="btn btn-outline-small" id="btn-add-column">+ Add Column</button>
-          <span class="column-manager-hint">Click the × on any column header to remove it.</span>
+          <span class="column-manager-hint">Assignments (10), Unit Tests (10), and Lab Reports (5) are split automatically and exactly. Fixed category full marks cannot be changed.</span>
         </div>
 
         <div class="table-scroll">
@@ -81,7 +83,7 @@
 
         <div class="save-row">
           <button class="btn btn-gold" id="btn-save-teacher-marks">Save Marks</button>
-          <span id="teacher-save-confirmation" class="save-confirmation"></span>
+          <span id="teacher-save-confirmation" class="save-confirmation"></span><p id="teacher-performance-note" class="column-manager-hint"></p>
         </div>
       </section>
 
@@ -104,41 +106,23 @@
           </div>
         </div>
 
-        <h3 class="sub-heading" id="dash-title">Semester / Subject</h3>
+        <div class="pane-header"><h3 class="sub-heading" id="dash-title">Semester / Subject</h3><button type="button" class="btn btn-gold" id="btn-dashboard-edit-marks">Edit marks for this subject</button></div>
+        <p class="column-manager-hint">This overview is read-only. Use Edit marks for this subject to add assessment columns, enter marks, and update saved marks for your assigned class.</p>
 
         <div class="table-scroll">
           <table class="marks-table" id="dash-summary-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Full Name</th>
-                <th>Attdn.</th>
-                <th>Assign.</th>
-                <th>Lab</th>
-                <th>Overall Act.</th>
-                <th>Total ave.</th>
-              </tr>
-            </thead>
+            <thead></thead>
             <tbody id="dash-summary-body"></tbody>
-            <tfoot>
-              <tr>
-                <td class="student-id-cell">Class</td>
-                <td class="student-name-cell">Total</td>
-                <td class="total-avg-cell" id="dash-total-attendance">–</td>
-                <td class="total-avg-cell" id="dash-total-assignment">–</td>
-                <td class="total-avg-cell" id="dash-total-lab">–</td>
-                <td class="total-avg-cell" id="dash-total-overall">–</td>
-                <td class="total-avg-cell" id="dash-total-average">–</td>
-              </tr>
-            </tfoot>
           </table>
         </div>
 
         <div class="dashboard-charts-row">
           <div class="chart-area dashboard-chart-area">
             <div class="chart-box" id="dash-donut-box"></div>
-            <div class="chart-box chart-box-large" id="dash-pie-box"></div>
+            <div class="subject-performance-charts" id="teacher-subject-performance-charts"></div>
+            <p class="performance-formula">Subject performance = Assignments + Unit Tests + Attendance + Grooming + Midterm + Lab Reports + Overall Activities + Preboard (out of 100).</p>
             <ul class="chart-legend" id="dash-legend"></ul>
+            <div class="performer-summary" id="teacher-performer-summary"></div>
           </div>
         </div>
       </section>
@@ -205,6 +189,7 @@
         <div id="att-step-absent" style="display:none;">
           <h3 class="sub-heading">Absent Students</h3>
           <h4 class="sub-heading" id="att-absent-subtitle" style="margin-top:-6px;"></h4>
+          <p id="att-submitted-message" class="upgrade-status-message ok" style="display:none;"></p>
 
           <div class="table-scroll">
             <table class="detail-table">
@@ -230,7 +215,8 @@ Contact number: 98XXXXXXXX, email address: class@gmail.com</textarea>
 
         <!-- STEP: success -->
         <div id="att-step-success" style="display:none;">
-          <h3 class="sub-heading">Attendance sent successfully</h3>
+          <h3 class="sub-heading" id="att-success-heading">Messages sent successfully</h3>
+          <p id="att-already-sent-message" class="upgrade-status-message" style="display:none;"></p>
 
           <div class="table-scroll">
             <table class="marks-table" id="att-success-table">
@@ -241,7 +227,26 @@ Contact number: 98XXXXXXXX, email address: class@gmail.com</textarea>
             </table>
           </div>
 
-          <p class="upgrade-status-message ok">Attendance submitted successfully. Thank you.</p>
+          <p id="att-success-message" class="upgrade-status-message ok">Messages were sent successfully to absent guardians.</p>
+
+          <div class="save-row">
+            <button class="btn btn-navy" id="btn-att-retry-sms" type="button">Send SMS to absent guardians</button>
+            <button class="btn btn-navy" id="btn-att-message-details" type="button">View message details</button>
+            <button class="btn btn-navy" id="btn-att-hide-message-details" type="button" style="display:none;">Hide message details</button>
+            <span id="att-retry-confirmation" class="save-confirmation"></span>
+          </div>
+
+          <div id="att-message-details-panel" class="config-card" style="display:none; margin-top:16px;">
+            <div class="config-card-header"><span class="config-card-title">Guardian message details</span></div>
+            <div class="table-scroll">
+              <table class="detail-table">
+                <thead>
+                  <tr><th>Student</th><th>Guardian</th><th>Contact number</th><th>Message</th><th>Status</th><th>Sent time</th></tr>
+                </thead>
+                <tbody id="att-message-details-body"></tbody>
+              </table>
+            </div>
+          </div>
 
           <button class="btn btn-gold btn-logout" id="btn-att-logout">Logout</button>
         </div>
@@ -255,7 +260,8 @@ Contact number: 98XXXXXXXX, email address: class@gmail.com</textarea>
     </main>
   </div>
 
-  <script src="js/api.js"></script>
-  <script src="js/teacher.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="js/api.js?v=20260930-sms-pasal-live"></script>
+  <script src="js/teacher.js?v=20260930-sms-provider-error"></script>
 </body>
 </html>

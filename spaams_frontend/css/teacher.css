@@ -901,3 +901,6 @@ tbody tr:hover {
     }
 
 }
+
+.mark-input.invalid-mark { border: 2px solid #d74747; background: #fff0f0; }
+.mark-error { display: block; color: #c72f2f; font-size: 11px; line-height: 1.25; margin-top: 3px; }

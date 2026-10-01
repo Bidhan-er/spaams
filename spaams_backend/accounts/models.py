@@ -32,6 +32,9 @@ class UserLogin(models.Model):
     id = models.AutoField(primary_key=True, db_column="login_id")
     username = models.CharField(max_length=50, unique=True)
     password_hash = models.CharField(max_length=255, db_column="password_hash")
+    # This is intentionally short-lived. It holds a generated initial password
+    # only until the account owner changes it, then is permanently set to NULL.
+    temp_password_plain = models.CharField(max_length=255, blank=True, null=True, editable=False)
     role = models.CharField(max_length=10)
     first_login = models.BooleanField(default=True)
     status = models.CharField(max_length=10, default="Active")
@@ -64,7 +67,7 @@ class Admin(models.Model):
     user = models.OneToOneField(UserLogin, on_delete=models.CASCADE, related_name="admin_profile", db_column="login_id", db_constraint=False)
     full_name = models.CharField(max_length=100)
     email = models.EmailField(blank=True, null=True)
-    phone = models.CharField(max_length=15, unique=True)
+    phone = models.CharField(max_length=10, unique=True)
 
     class Meta:
         db_table = "admin"
@@ -112,7 +115,7 @@ class Student(models.Model):
     full_name = models.CharField(max_length=100)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES)
     date_of_birth = models.DateField()
-    phone = models.CharField(max_length=15, unique=True)
+    phone = models.CharField(max_length=10, unique=True)
     email = models.EmailField(blank=True, null=True)
     address = models.TextField()
     photo = models.CharField(max_length=255, blank=True, null=True)  # file path/URL
@@ -131,7 +134,7 @@ class PasswordReset(models.Model):
 
     id = models.AutoField(primary_key=True, db_column="reset_id")
     user = models.ForeignKey(UserLogin, on_delete=models.CASCADE, related_name="password_resets", db_column="login_id", db_constraint=False)
-    otp = models.CharField(max_length=10)
+    otp = models.CharField(max_length=6)
     expiry_time = models.DateTimeField()
     verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

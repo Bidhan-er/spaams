@@ -174,8 +174,9 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 
-# Development uses console mail; set EMAIL_BACKEND/EMAIL_HOST credentials in
-# your environment for real OTP email delivery.
+# Local development intentionally uses Django's console mail backend. It
+# prints each OTP email in the runserver terminal; it does not send inbox mail.
+# Set the SMTP values in .env when you are ready to use a real provider.
 EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
@@ -183,9 +184,19 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "true").lower() == "true"
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "noreply@spaams.local")
+PASSWORD_RESET_OTP_EXPIRY_MINUTES = int(os.environ.get("PASSWORD_RESET_OTP_EXPIRY_MINUTES", "2"))
+# Do not hide email errors while developing. A production deployment may set
+# this to true only when its monitoring records the delivery failure.
+EMAIL_FAIL_SILENTLY = os.environ.get("EMAIL_FAIL_SILENTLY", "false").lower() == "true"
 
-# Optional Sparrow SMS credentials. Keep these outside source control, for
-# example in your terminal: set SPARROW_SMS_TOKEN=... . Without a token,
-# notifications are safely recorded as Pending instead of falsely reported as sent.
-SPARROW_SMS_TOKEN = os.environ.get("SPARROW_SMS_TOKEN", "")
-SPARROW_SMS_FROM = os.environ.get("SPARROW_SMS_FROM", "SPAAMS")
+# Optional SMS Pasal credentials. Keep the real key outside source control.
+# Without both the key and approved Sender ID, absence alerts remain safely
+# recorded as Pending rather than being falsely reported as sent.
+SMS_PASAL_API_KEY = os.environ.get("SMS_PASAL_API_KEY", "")
+if SMS_PASAL_API_KEY == "PASTE_YOUR_SMS_PASAL_API_KEY_HERE":
+    SMS_PASAL_API_KEY = ""
+# SMSBit is the approved default Sender ID in the connected SMS Pasal account.
+SMS_PASAL_SENDER_ID = os.environ.get("SMS_PASAL_SENDER_ID", "SMSBit")
+SMS_PASAL_CAMPAIGN_ID = os.environ.get("SMS_PASAL_CAMPAIGN_ID", "")
+SMS_PASAL_ROUTE_ID = os.environ.get("SMS_PASAL_ROUTE_ID", "")
+ADMIN_DATA_RESET_CODE = os.environ.get("ADMIN_DATA_RESET_CODE", "")

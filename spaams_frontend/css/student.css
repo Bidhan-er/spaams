@@ -6,19 +6,19 @@
    ========================================================== */
 
 :root {
-  --s-bg: #f4f6fb;
-  --s-sidebar: #10162b;
-  --s-sidebar-text: #aab2c8;
-  --s-card: #ffffff;
-  --s-border: #e7eaf3;
-  --s-text: #1c2434;
-  --s-text-muted: #8894a6;
-  --s-primary: #4f6df5;
-  --s-primary-dark: #3d57d6;
-  --s-good: #2fbf71;
-  --s-bad: #e5566d;
-  --s-warn: #e0a324;
-  --s-purple: #8a5cf6;
+  --s-bg: #060a12;
+  --s-sidebar: #0a101c;
+  --s-sidebar-text: #a8b4c7;
+  --s-card: #101927;
+  --s-border: #1c2a3d;
+  --s-text: #f8fafc;
+  --s-text-muted: #68778d;
+  --s-primary: #3b82f6;
+  --s-primary-dark: #2563eb;
+  --s-good: #22c55e;
+  --s-bad: #ef4444;
+  --s-warn: #f59e0b;
+  --s-purple: #22d3ee;
 }
 
 * { box-sizing: border-box; }
@@ -64,6 +64,8 @@ body {
   gap: 10px;
   padding: 0 6px;
 }
+.s-brand { justify-content: flex-start; padding: 0 2px 8px; }
+.s-brand-logo { display: block; width: 132px; height: auto; mix-blend-mode: screen; }
 .s-logo {
   width: 40px;
   height: 40px;
@@ -129,7 +131,7 @@ body {
   padding: 10px 12px;
   margin-top: 10px;
 }
-.s-date-icon { font-size: 18px; }
+.s-date-icon { font-size: 11px; font-weight: 800; color: var(--s-primary); }
 .s-date-label { font-size: 10px; color: #6b7690; }
 .s-date-value { font-size: 12.5px; font-weight: 700; color: #fff; }
 .s-footer {
@@ -201,7 +203,8 @@ body {
   border-radius: 50%;
   width: 38px;
   height: 38px;
-  font-size: 15px;
+  font-size: 11px;
+  font-weight: 800;
   cursor: pointer;
 }
 .s-bell-badge {
@@ -258,7 +261,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--s-primary);
 }
 .s-caret { color: var(--s-text-muted); font-size: 10px; }
 .s-profile-menu {
@@ -357,11 +362,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--s-primary);
   margin: 0 auto 10px;
   position: relative;
 }
-.s-avatar-lg.small { width: 64px; height: 64px; font-size: 30px; }
+.s-avatar-lg.small { width: 64px; height: 64px; font-size: 22px; }
 .s-avatar-edit {
   position: absolute;
   bottom: -2px;
@@ -374,7 +381,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 8px;
+  font-weight: 700;
   border: 2px solid #fff;
 }
 .s-profile-name-lg { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
@@ -458,7 +466,7 @@ body {
   background: #eafaf1;
   border-color: #bdeed3;
 }
-.s-alert-icon { font-size: 26px; }
+.s-alert-icon { font-size: 18px; font-weight: 900; }
 .s-alert-title { font-weight: 800; color: var(--s-bad); font-size: 14px; }
 .s-alert-card.s-alert-ok .s-alert-title { color: var(--s-good); }
 .s-alert-text { font-size: 12px; color: #6b4a4f; margin-top: 2px; }
@@ -508,7 +516,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--s-primary);
 }
 .s-top5-name { font-size: 12px; font-weight: 600; }
 .s-top5-pct { font-size: 11px; color: var(--s-text-muted); margin-left: auto; font-weight: 700; }
@@ -559,14 +569,17 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 17px;
+  font-size: 12px;
+  font-weight: 800;
 }
 .s-mini-stat-label { font-size: 11px; color: var(--s-text-muted); }
 .s-mini-stat-value { font-size: 15px; font-weight: 800; }
 .s-mini-stat-flag { font-size: 10.5px; color: var(--s-bad); font-weight: 700; }
 
-/* ---------- charts (plain SVG, no library) ---------- */
-.s-chart-box { width: 100%; }
+/* ---------- responsive Chart.js canvases ---------- */
+.s-chart-box { width: 100%; height: 250px; position: relative; }
+.s-chart-box canvas, #c-subject-bar-chart canvas { width: 100% !important; height: 100% !important; }
+#c-subject-bar-chart { height: 260px; position: relative; }
 .s-chart-tooltip {
   position: fixed;
   background: #1c2434;
@@ -654,3 +667,53 @@ body {
 .s-success-text { color: var(--s-good); font-size: 11.5px; margin: 8px 0 0; font-weight: 600; }
 .s-modal-actions { display: flex; gap: 10px; margin-top: 14px; }
 .s-modal-actions .s-btn { flex: 1; }
+
+/* Student records use the same deliberate, academic visual language as the
+   staff workspaces: restrained surfaces, clear status, and useful detail. */
+body, button, input, select, textarea { font-family: "Inter", system-ui, sans-serif; }
+.s-sidebar { background: var(--s-sidebar); padding: 22px 14px; border-right: 1px solid var(--s-border); }
+.s-logo { border-radius: 8px; background: #e3b44a; color: #10213c; font-family: "Inter", system-ui, sans-serif; font-weight: 800; font-size: 16px; }
+.s-nav { gap: 3px; }
+.s-nav-item { position: relative; border-radius: 0; padding: 10px 10px; }
+.s-nav-item:hover { background: var(--s-card); }
+.s-nav-item.active { background: var(--s-card); color: #fff; }
+.s-nav-item.active::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; background: var(--s-primary); }
+.s-nav-icon { width: 20px; color: var(--s-primary); font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+.s-home-btn { border-radius: 6px; font-size: 17px; }
+.s-date-card { border-radius: 6px; background: var(--s-card); }
+.s-date-icon { display: none; }
+.s-main { background: radial-gradient(700px circle at 80% -10%, rgba(59,130,246,.10), transparent 55%), var(--s-bg); padding: 28px 34px 42px; }
+.s-welcome { font-size: 23px; }
+.s-welcome::after { content: ""; display: block; width: 34px; height: 2px; margin-top: 10px; background: var(--s-primary); }
+.s-card, .s-panel, .s-table-wrap, .s-chart-card { border-radius: 7px; border-color: var(--s-border); box-shadow: none; }
+.s-card:hover { transform: none; }
+.s-btn { border-radius: 6px; box-shadow: none; transition: background-color 150ms ease, border-color 150ms ease, transform 100ms ease; }
+.s-btn:active { transform: translateY(1px); }
+.s-profile-chip, .s-notification-btn { border-radius: 6px; box-shadow: none; background: var(--s-card); border-color: var(--s-border); color: var(--s-text); }
+.student-celebration { background: rgba(16,33,60,.2); }
+.celebration-balloon { display: none; }
+.celebration-message { border-radius: 8px; box-shadow: 0 10px 28px rgba(20,38,70,.14); }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid rgba(96,165,250,.7); outline-offset: 2px; }
+@media (max-width: 760px) {
+  .student-shell { display: block; }
+  .s-sidebar { width: 100%; min-height: auto; }
+  .s-nav { display: grid; grid-template-columns: 1fr 1fr; }
+  .s-date-card, .s-footer { display: none; }
+  .s-home-btn { position: absolute; top: 18px; right: 16px; }
+  .s-main { padding: 22px 16px 32px; }
+}
+
+/* Dark student data surfaces. The records themselves remain the visual focus. */
+.s-topbar-right select, .s-data-table, .s-data-table td, .s-data-table th, .s-info-table td, .s-info-table th, .s-profile-menu, .s-notif-menu, .s-modal-box, .s-input { background: var(--s-card); color: var(--s-text); border-color: var(--s-border); }
+.s-data-table th { background: #141f31; color: var(--s-text-secondary); }
+.s-data-table td, .s-info-table td { color: var(--s-text-secondary); border-color: var(--s-border); }
+.s-tabs { background: var(--s-card); border: 1px solid var(--s-border); }
+.s-tab { color: var(--s-text-secondary); }
+.s-tab.active { background: #141f31; color: var(--s-text); }
+.s-mini-stat, .s-stat-card, .s-current-sem-card, .s-top-scorer-card, .s-alert-card, .s-top5-card { background: var(--s-card); border-color: var(--s-border); }
+.s-mini-stat-icon, .s-stat-icon { background: #141f31 !important; color: var(--s-primary) !important; }
+.s-avatar, .s-avatar-lg, .s-top5-avatar { background: #1c2a3d; color: var(--s-text); }
+.s-profile-btn, .s-bell-btn { background: var(--s-card); color: var(--s-text); border-color: var(--s-border); }
+.s-alert-icon, .s-avatar-edit { display: none; }
+.s-btn-primary { background: var(--s-primary); }
+.s-btn-primary:hover { background: #60a5fa; }

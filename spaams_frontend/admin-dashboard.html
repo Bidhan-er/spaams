@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SPAAMS - Admin Dashboard</title>
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/admin.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/admin.css?v=20261001-attendance-date-limit" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700;900&display=swap" rel="stylesheet" />
 </head>
 <body class="admin-body">
 
@@ -17,10 +17,8 @@
          ============================================================ -->
     <aside class="sidebar">
       <div class="sidebar-brand">
-        <span class="logo-inline">🎓</span>
-        <span class="sidebar-title">SPAAMS</span>
+        <img class="sidebar-brand-logo" src="assets/spaams-logo.png?v=20261001-text-logo" alt="SPAAMS logo" />
       </div>
-      <p class="sidebar-tagline">Student Performance Analytics and attendance Monitoring System</p>
 
       <nav class="sidebar-menu">
         <button class="menu-item active" data-menu="student-dashboard">Student Dashboard <span class="dot"></span></button>
@@ -31,7 +29,7 @@
         <button class="menu-item" data-menu="setting">Setting <span class="dot"></span></button>
       </nav>
 
-      <button class="btn-home-sidebar" id="btn-back" title="Back one step">🏠</button>
+      <button class="btn-home-sidebar" id="btn-back" title="Back one step" aria-label="Back">←</button>
     </aside>
 
     <!-- ============================================================
@@ -39,6 +37,10 @@
          Different "views" inside here are swapped by admin.js
          ============================================================ -->
     <main class="content-pane">
+      <button type="button" class="admin-welcome-chip" id="admin-welcome-chip" title="Change admin name">
+        <span class="admin-welcome-avatar" aria-hidden="true">A</span>
+        <span><b class="admin-welcome-role">ADMIN</b><small>Welcome,</small><strong id="admin-welcome-name">Admin</strong></span>
+      </button>
 
       <!-- ---- VIEW: empty state (just landed on Student Dashboard) ---- -->
       <section class="view" id="view-empty">
@@ -63,11 +65,22 @@
           </div>
         </div>
 
+        <div class="admin-overview-cards" aria-label="System overview">
+          <section class="admin-overview-card students"><div><small>Total Students</small><strong id="overview-total-students">0</strong></div></section>
+          <section class="admin-overview-card teachers"><div><small>Total Teachers</small><strong id="overview-total-teachers">0</strong></div></section>
+          <section class="admin-overview-card active-students"><div><small>Active Students</small><strong id="overview-active-students">0</strong></div></section>
+          <section class="admin-overview-card active-teachers"><div><small>Active Teachers</small><strong id="overview-active-teachers">0</strong></div></section>
+          <section class="admin-overview-card disabled-students"><div><small>Disabled Students</small><strong id="overview-disabled-students">0</strong></div></section>
+          <section class="admin-overview-card disabled-teachers"><div><small>Disabled Teachers</small><strong id="overview-disabled-teachers">0</strong></div></section>
+          <section class="admin-overview-card graduated-students"><div><small>Graduated Students</small><strong id="overview-graduated-students">0</strong></div></section>
+        </div>
+
         <div class="student-table-scroll"><table class="student-table">
           <thead>
             <tr>
               <th colspan="5">Personal Details</th>
               <th colspan="4">Academic Details</th>
+              <th colspan="3">Account Security</th>
             </tr>
             <tr>
               <th>Reg. No.</th>
@@ -77,8 +90,11 @@
               <th>Email address</th>
               <th>Faculty</th>
               <th>Semester</th>
-              <th>GPA/Marks</th>
-              <th>Rank</th>
+              <th>Batch</th>
+              <th>Board GPA</th>
+              <th>Account</th>
+              <th>Password status</th>
+              <th>Temporary password</th>
             </tr>
           </thead>
           <tbody id="student-table-body">
@@ -90,14 +106,12 @@
       <!-- ---- VIEW: student detail ---- -->
       <section class="view" id="view-student-detail">
         <div class="detail-header">
-          <div class="detail-avatar">🙂</div>
-          <div class="detail-name" id="detail-student-name">Student Name</div>
-
-          <div class="details-dropdown">
-            <button class="btn-details" id="btn-details-toggle">Details ▾</button>
-            <div class="dropdown-menu" id="dropdown-menu">
-              <button class="dropdown-option active" data-tab="personal">Personal Details</button>
-              <button class="dropdown-option" data-tab="academic">Academic Details</button>
+          <div class="detail-avatar" aria-hidden="true"><span class="detail-avatar-icon"></span></div>
+          <div class="detail-identity">
+            <div class="detail-name" id="detail-student-name">Student Name</div>
+            <div class="detail-tabs" role="tablist" aria-label="Student details">
+              <button class="detail-tab active" type="button" data-tab="personal" role="tab" aria-selected="true">Personal Details</button>
+              <button class="detail-tab" type="button" data-tab="academic" role="tab" aria-selected="false">Academic Performance</button>
             </div>
           </div>
         </div>
@@ -141,7 +155,7 @@
           <div class="chart-area">
             <div class="chart-box">
               <div id="chart-loading" class="chart-loading">Loading chart…</div>
-              <img id="performance-chart" class="performance-chart" alt="Performance breakdown pie chart" />
+              <canvas id="performance-chart" class="performance-chart" aria-label="Student performance breakdown"></canvas>
             </div>
             <ul class="chart-legend">
               <li><span class="swatch swatch-attendance"></span> Attendance</li>
@@ -182,9 +196,26 @@
             <option value="7">VII Semester</option>
             <option value="8">VIII Semester</option>
           </select>
+
+          <label class="selector-label" for="detail-batch-select">Batch</label>
+          <select id="detail-batch-select"></select>
+
+          <label class="selector-label" for="detail-subject-select">Subject</label>
+          <select id="detail-subject-select"></select>
         </div>
 
         <h3 class="sub-heading" id="semester-marks-title">I Semester details</h3>
+
+        <div class="column-manager-row">
+          <label class="selector-label">Add sub-column:</label>
+          <select id="admin-column-category"><option value="Unit Test">Unit Test</option><option value="Assignments">Assignments</option><option value="Lab Reports">Lab Reports</option><option value="Grooming">Grooming</option><option value="Midterm">Midterm</option><option value="Preboards">Preboards</option><option value="Overall Activities">Overall Activities</option></select>
+          <input id="admin-column-name" placeholder="Column name" />
+          <input id="admin-column-maximum" type="number" min="1" placeholder="Full marks" />
+          <input id="admin-column-pass" type="number" min="0" placeholder="Pass marks" />
+          <button class="btn btn-outline-small" id="btn-admin-add-column" type="button">+ Add Column</button>
+          <label class="selector-label" for="admin-marks-status-filter">Show status:</label>
+          <select id="admin-marks-status-filter"><option value="all">All</option><option value="pass">Pass</option><option value="fail">Fail</option></select>
+        </div>
 
         <div class="table-scroll">
           <table class="marks-table" id="marks-table">
@@ -203,6 +234,7 @@
       <section class="view" id="view-semester-dashboard">
         <div class="pane-header">
           <h2>Semester-wise Dashboard</h2>
+          <div class="search-row"><label class="search-label" for="dashboard-student-search">Search:</label><input type="text" id="dashboard-student-search" placeholder="Search student..." autocomplete="off" /><span id="dashboard-search-count" class="search-count"></span></div>
         </div>
 
         <div class="selector-row">
@@ -230,6 +262,13 @@
             <option value="2022">2022 Batch</option>
             <option value="2023">2023 Batch</option>
           </select>
+
+          <label class="selector-label" for="dashboard-status-filter">Status</label>
+          <select id="dashboard-status-filter">
+            <option value="all">All students</option>
+            <option value="pass">Pass</option>
+            <option value="fail">Fail</option>
+          </select>
         </div>
 
         <h3 class="sub-heading" id="dashboard-semester-title">I Semester details</h3>
@@ -256,17 +295,13 @@
             <div class="chart-box">
               <div class="fallback-pie" id="attendance-pie"></div>
             </div>
-            <div class="chart-box">
-              <div class="fallback-pie" id="breakdown-pie"></div>
-            </div>
+            <div class="subject-performance-charts" id="subject-performance-charts"></div>
+            <p class="performance-formula" id="performance-formula">Subject performance = Assignments + Unit Tests + Attendance + Grooming + Midterm + Lab Reports + Overall Activities + Preboard (out of 100).</p>
             <ul class="chart-legend" id="dashboard-legend"></ul>
+            <div class="performer-summary" id="performer-summary"></div>
           </div>
         </div>
 
-        <div class="analysis-panel">
-          <h3 class="sub-heading">Analysis</h3>
-          <div class="analysis-grid" id="analysis-grid"></div>
-        </div>
       </section>
 
       <!-- ---- VIEW: Attendance Monitoring ---- -->
@@ -298,8 +333,14 @@
             <option value="8">VIII Semester</option>
           </select>
 
+          <label class="selector-label" for="att-batch-select">Select Batch</label>
+          <select id="att-batch-select">
+            <option value="">Select a batch</option>
+          </select>
+
           <label class="selector-label" for="att-date-input">Date</label>
           <input type="date" id="att-date-input" />
+          <span id="att-date-day" class="attendance-date-label" aria-live="polite"></span>
         </div>
 
         <h3 class="sub-heading">Attendance details</h3>
@@ -312,8 +353,8 @@
                 <th>IDs</th>
                 <th>Name</th>
                 <th>
-                  Present / Absent
-                  <input type="checkbox" id="attendance-select-all" title="Mark everyone present/absent" />
+                  Present
+                  <input type="checkbox" id="attendance-select-all" title="Mark every student present" />
                 </th>
               </tr>
             </thead>
@@ -351,6 +392,41 @@
         </div>
         <h3 class="sub-heading">System Configuration &amp; Data Management</h3>
 
+        <div class="config-card" id="admin-name-card">
+          <div class="config-card-header">
+            <span class="config-card-title">Change Admin Name</span>
+          </div>
+          <div class="selector-row">
+            <input type="text" id="admin-name-input" maxlength="100" placeholder="Enter admin name" autocomplete="name" />
+            <button class="btn btn-navy" id="btn-save-admin-name" type="button">Save Name</button>
+          </div>
+          <p id="admin-name-status" class="csv-hint" aria-live="polite"></p>
+        </div>
+
+        <!-- Required reference records for student imports -->
+        <div class="config-card" id="academic-setup-card">
+          <div class="config-card-header">
+            <span class="config-card-title">Faculty &amp; Semester Setup</span>
+          </div>
+          <p class="csv-hint">Create these reference records before importing students. A CSV faculty value must exactly match a saved faculty.</p>
+          <div class="selector-row">
+            <input type="text" id="new-faculty-name" placeholder="Faculty name (e.g. BCA)" />
+            <input type="text" id="new-university-name" placeholder="University name (e.g. Tribhuvan University)" />
+            <button class="btn btn-gold" id="btn-add-faculty" type="button">+ Add Faculty</button>
+            <button class="btn btn-navy" id="btn-create-standard-semesters" type="button">Create Semesters 1–8</button>
+          </div>
+          <p id="academic-setup-status" class="csv-hint" aria-live="polite"></p>
+        </div>
+
+        <div class="config-card data-reset-card">
+          <div class="config-card-header">
+            <span class="config-card-title">Reset Existing Data</span>
+          </div>
+          <p class="data-reset-warning"><strong>Permanent action:</strong> this removes all students, teachers, faculty, semesters, subjects, marks, attendance, SMS history, imports, and archives. All admin accounts and admin login access stay available.</p>
+          <button class="btn btn-data-reset" id="btn-reset-operational-data" type="button">Remove Existing Data</button>
+          <p id="data-reset-status" class="csv-hint" aria-live="polite"></p>
+        </div>
+
         <!-- CSV bulk upload -->
         <div class="config-card">
           <div class="config-card-header">
@@ -366,7 +442,10 @@
               <p class="csv-hint">Optional columns: email, guardian_email. After choosing a file, map your own CSV headings below.</p>
               <div id="csv-column-mapping" aria-live="polite"></div>
             </div>
-            <button class="btn btn-navy" id="btn-validate-import">Validation &amp; Import</button>
+            <div class="csv-action-buttons">
+              <button class="btn btn-navy" id="btn-validate-import">Check CSV</button>
+              <button class="btn btn-gold" id="btn-confirm-import" disabled>Import validated CSV</button>
+            </div>
             <button class="btn btn-outline-small" id="btn-export-students">Export CSV</button>
           </div>
           <div id="csv-preview-area"></div>
@@ -414,9 +493,14 @@
             </select>
             <input type="date" id="new-student-dob" />
             <input type="text" id="new-student-phone" placeholder="Phone" />
+            <p id="new-student-phone-error" class="field-error" aria-live="polite"></p>
             <input type="text" id="new-student-address" placeholder="Address" />
             <input type="text" id="new-student-guardian" placeholder="Guardian Name" />
             <input type="text" id="new-student-guardian-phone" placeholder="Guardian Phone" />
+            <p id="new-student-guardian-phone-error" class="field-error" aria-live="polite"></p>
+            <input type="email" id="new-student-guardian-email" placeholder="Guardian Email (optional)" />
+            <input type="email" id="new-student-email" placeholder="Student Email (optional, needed for OTP reset)" />
+            <select id="new-student-faculty" aria-label="Faculty"></select>
             <input type="number" id="new-student-batch" placeholder="Batch / Academic Year (e.g. 2025)" min="2000" max="2100" />
             <select id="new-student-semester">
               <option value="1">I Semester</option>
@@ -428,6 +512,7 @@
               <option value="7">VII Semester</option>
               <option value="8">VIII Semester</option>
             </select>
+            <select id="new-student-status" aria-label="Account status"><option value="Active">Active</option><option value="Disabled">Disabled</option></select>
 
             <button class="btn btn-navy record-submit" id="btn-add-student">Add Student</button>
             <div id="new-student-result" class="credential-result"></div>
@@ -453,8 +538,9 @@
             <label class="csv-hint">Joining date <input type="date" id="manual-teacher-joining-date" /></label>
             <select id="manual-teacher-status"><option value="Active">Active</option><option value="Disabled">Disabled</option></select>
             <label class="csv-hint">Optional first assignment</label>
-            <input type="number" id="manual-teacher-batch" placeholder="Assignment batch / Academic Year (e.g. 2025)" min="2000" max="2100" />
+            <select id="manual-teacher-batch" aria-label="Assignment batch"><option value="">Choose a semester first</option></select>
             <div class="assignment-rows" id="teacher-assignment-rows"></div>
+            <button class="btn btn-outline-small" id="btn-add-manual-assignment" type="button">+ Add more subjects / semesters</button>
             <button class="btn btn-navy record-submit" id="btn-add-teacher-manual">Add Teacher</button>
             <div id="manual-teacher-result" class="credential-result"></div>
           </div>
@@ -502,6 +588,7 @@
                   <th>Qualification</th>
                   <th>Joining Date</th>
                   <th>Status</th>
+                  <th>Initial Password</th>
                 </tr>
               </thead>
               <tbody id="teacher-management-body"></tbody>
@@ -575,7 +662,7 @@
         </div>
 
         <!-- Data Storage Management -->
-        <div class="config-card">
+        <div class="config-card archive-storage-card">
           <div class="config-card-header">
             <span class="config-card-title">Data Storage Management</span>
           </div>
@@ -583,11 +670,13 @@
             <label class="search-label">Search Context:</label>
             <input type="text" id="archive-search" placeholder="Search by name/ID" autocomplete="off" />
             <span id="archive-search-count" class="search-count"></span>
+            <label class="search-label archive-batch-label" for="archive-batch-filter">Batch:</label>
+            <select id="archive-batch-filter"><option value="all">All batches</option></select>
           </div>
-          <div class="table-scroll">
+          <div class="table-scroll archive-table-scroll">
             <table class="detail-table">
               <thead>
-                <tr><th>ID</th><th>Full Name</th><th>Batch</th><th>Final Marks</th></tr>
+                <tr><th>ID</th><th>Full Name</th><th>Batch</th><th>CGPA</th></tr>
               </thead>
               <tbody id="archive-table-body"></tbody>
             </table>
@@ -605,7 +694,8 @@
     </main>
   </div>
 
-  <script src="js/api.js"></script>
-  <script src="js/admin.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="js/api.js?v=20260930-sms-pasal-live"></script>
+  <script src="js/admin.js?v=20261001-dashboard-status-filter"></script>
 </body>
 </html>

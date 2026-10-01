@@ -16,9 +16,11 @@ from academics.models import Semester, Subject
 
 class AttendanceSession(models.Model):
     id = models.AutoField(primary_key=True, db_column="attendance_session_id")
-    teacher = models.ForeignKey("accounts.Teacher", on_delete=models.PROTECT)
+    # Whole-class attendance is recorded once per semester and date; it is
+    # not tied to an academic subject or an individual teacher.
+    teacher = models.ForeignKey("accounts.Teacher", on_delete=models.PROTECT, blank=True, null=True)
     semester = models.ForeignKey(Semester, on_delete=models.PROTECT)
-    subject = models.ForeignKey(Subject, on_delete=models.PROTECT)
+    subject = models.ForeignKey(Subject, on_delete=models.PROTECT, blank=True, null=True)
     attendance_date = models.DateField()
     submitted_at = models.DateTimeField(blank=True, null=True)
     is_locked = models.BooleanField(default=False)
@@ -29,7 +31,7 @@ class AttendanceSession(models.Model):
     class Meta:
         db_table = "attendance_session"
         managed = False
-        unique_together = ("semester", "subject", "attendance_date")
+        unique_together = ("semester", "attendance_date")
 
     def __str__(self):
         return f"{self.subject} - {self.attendance_date}"
@@ -56,7 +58,7 @@ class Attendance(models.Model):
 class SmsHistory(models.Model):
     """
     Guardian notifications for absent students. Real delivery goes
-    through the Sparrow SMS API on the backend — this table just
+    through the SMS Pasal API on the backend — this table just
     logs what was sent, not how it was transmitted.
     """
 

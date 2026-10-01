@@ -1,0 +1,9 @@
+# Generated Python files
+__pycache__/
+*.py[cod]
+
+# Local configuration and editor files
+.env
+.venv/
+venv/
+.vscode/

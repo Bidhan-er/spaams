@@ -41,11 +41,13 @@ urlpatterns = [
 
     # Our custom API, used by the React/HTML+JS frontend.
     # e.g. /api/auth/login/, /api/admin/students/, /api/admin/subjects/
+    # Specific import/export routes must come before the generic
+    # /api/admin/students/<id>/ router route in accounts.urls.
+    path('api/', include('administration.urls')),
     path('api/', include('accounts.urls')),
     path('api/', include('academics.urls')),
     path('api/', include('analytics.urls')),
     path('api/', include('assessment.urls')),
     path('api/', include('attendance.urls')),
-    path('api/', include('administration.urls')),
     path('api/', include('progression.urls')),
 ]

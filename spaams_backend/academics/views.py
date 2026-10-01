@@ -69,8 +69,7 @@ class StudentPerformanceView(APIView):
     GET /api/admin/students/<id>/performance/
 
     Powers the Academic Details tab on the Student Detail screen:
-    returns the percentage breakdown AND a ready-to-render pie
-    chart image (base64 PNG), computed with pandas/numpy/matplotlib.
+    returns real percentage values; Chart.js renders them in the browser.
     """
 
     permission_classes = [IsAdminRole]

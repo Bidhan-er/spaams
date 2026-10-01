@@ -1,11 +1,14 @@
+from collections import defaultdict
+
 from django.db import transaction
+from django.db.models import Max
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.models import Admin, Student
 from accounts.views import IsAdminRole
 from academics.models import Semester, StudentEnrollment
-from assessment.models import StudentMarks
+from assessment.models import BoardMarks, StudentMarks
 from attendance.models import Attendance
 from .models import ArchiveAttendance, ArchivedStudent, ArchiveMarks, SemesterPromotion
 
@@ -162,5 +165,31 @@ class ArchiveStudentListView(APIView):
 
     def get(self, request):
         rows = ArchivedStudent.objects.select_related("final_semester").order_by("-archived_date")
-        return Response([{"id": row.id, "registration_number": row.registration_number, "full_name": row.full_name,
-            "final_semester": row.final_semester.semester_name if row.final_semester else None, "archived_date": row.archived_date} for row in rows])
+        original_student_ids = [row.original_student_id for row in rows]
+        batches = {
+            item["student_id"]: item["batch"]
+            for item in StudentEnrollment.objects.filter(student_id__in=original_student_ids)
+            .values("student_id")
+            .annotate(batch=Max("academic_year"))
+        }
+
+        # A CGPA is the average of the actual Board GPA from each semester
+        # with saved board results. No value is returned until those results exist.
+        semester_totals = defaultdict(lambda: defaultdict(lambda: [0.0, 0.0]))
+        for mark in BoardMarks.objects.filter(student_id__in=original_student_ids).select_related("subject__semester"):
+            totals = semester_totals[mark.student_id][mark.subject.semester_id]
+            totals[0] += float(mark.marks_obtained)
+            totals[1] += float(mark.maximum_marks)
+
+        cgpAs = {}
+        for student_id, semesters in semester_totals.items():
+            semester_gpas = [obtained / maximum for obtained, maximum in semesters.values() if maximum]
+            cgpAs[student_id] = round(sum(semester_gpas) / len(semester_gpas), 2) if semester_gpas else None
+
+        return Response([{
+            "id": row.id,
+            "registration_number": row.registration_number,
+            "full_name": row.full_name,
+            "batch": batches.get(row.original_student_id),
+            "cgpa": cgpAs.get(row.original_student_id),
+        } for row in rows])

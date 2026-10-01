@@ -17,18 +17,35 @@ let semesterSummary = {};
 // unitTest + assignment + preboard + lab(0 if none) + grooming + overall.
 let classPerformanceBySemester = {};
 function subjectTotal(row) {
-  return row.unitTest + row.assignment + row.preboard + (row.lab || 0) + row.grooming + row.overall;
+  return row.total == null ? 0 : Number(row.total);
 }
 
 let topScorersBySemester = {};
 
-// Given directly by the source data (not derivable from the /120
-// totals above with a simple average — likely computed on a
-// different marks scale server-side, so it's mocked as its own
-// provided stat rather than a fabricated formula).
+// Per-semester subject average. Each subject total is on the same
+// permanent 100-point scale used throughout the student dashboard.
 let avgMarksBySemester = {};
 
 const ATTENDANCE_ALERT_THRESHOLD = 90; // matches the "Below 90%" flag in the mockup
+const studentCharts = {};
+
+function renderStudentChart(key, canvas, type, labels, values, colors) {
+  studentCharts[key]?.destroy();
+  if (typeof Chart === "undefined") {
+    canvas.parentElement.textContent = "Chart library could not load. Check your internet connection and refresh.";
+    return;
+  }
+  if (!values.some((value) => value != null && Number(value) > 0)) {
+    canvas.style.display = "none";
+    return;
+  }
+  canvas.style.display = "block";
+  studentCharts[key] = new Chart(canvas, {
+    type,
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderColor: "#4f6df5", borderWidth: type === "line" ? 2 : 0, tension: 0.35, fill: type === "line" ? false : undefined, borderRadius: type === "bar" ? 6 : 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: type === "doughnut", position: "bottom" }, tooltip: { callbacks: { label: (context) => `${context.label}: ${Number(context.parsed.y ?? context.parsed).toFixed(1)}%` } } }, scales: type === "doughnut" ? {} : { y: { beginAtZero: true, max: 100, ticks: { callback: (value) => `${value}%` } } } },
+  });
+}
 
 /* ----------------------------------------------------------
    Small helpers
@@ -48,7 +65,7 @@ function showStudentCelebration() {
   sessionStorage.removeItem("spaams_show_student_celebration");
   const overlay = document.getElementById("student-celebration");
   const colors = ["#ff5f7e", "#4f6df5", "#2fbf71", "#f0b429", "#9b6cf5", "#35c4d8"];
-  overlay.innerHTML = `<div class="celebration-message"><span>🎉</span><strong>Welcome to SPAAMS!</strong><small>Your account is ready.</small></div>`;
+  overlay.innerHTML = `<div class="celebration-message"><strong>Welcome to SPAAMS</strong><small>Your account is ready.</small></div>`;
   for (let index = 0; index < 26; index += 1) {
     const balloon = document.createElement("span");
     balloon.className = "celebration-balloon";
@@ -243,28 +260,32 @@ function renderAcademicTab() {
         <td>${label}</td>
         <td>${currentStudent.full_name}</td>
         <td>${currentStudent.student_id}</td>
-        <td>${s.boardMarks !== null ? s.boardMarks.toFixed(2) + "%" : "-"}</td>
+        <td>${s.boardMarks !== null ? s.boardMarks.toFixed(2) : "-"}</td>
         <td>${s.cgpa !== null ? s.cgpa.toFixed(2) : "-"}</td>
       </tr>
     `;
   }).join("");
 
-  const boardValues = Object.values(semesterSummary).map((row) => row.boardMarks).filter((value) => value !== null);
-  document.getElementById("a-progress-chart").innerHTML = boardValues.length
-    ? '<p style="color:#8894a6;text-align:center;padding:24px;">Performance chart is generated from real marks by the backend.</p>'
-    : '<p style="color:#8894a6;text-align:center;padding:24px;">No marks have been entered yet.</p>';
+  const progressCanvas = document.getElementById("a-progress-chart");
+  const progressValues = semesterLabels.map((_, index) => semesterSummary[index + 1]?.boardMarks ?? null);
+  renderStudentChart("academic-progress", progressCanvas, "line", semesterLabels, progressValues, "#4f6df5");
 
   const currentSemNum = Math.max(...Object.keys(semesterSummary).map(Number));
   const rows = classPerformanceBySemester[currentSemNum] || [];
   document.getElementById("a-avg-label").textContent = `Avg. Marks (${semesterLabels[currentSemNum - 1]})`;
-  document.getElementById("a-avg-value").textContent = rows.length ? `${avgMarksBySemester[currentSemNum].toFixed(2)}%` : "–";
+  const enteredRows = rows.filter((row) => row.has_entered_marks === true || row.total != null);
+  const average = avgMarksBySemester[currentSemNum];
+  document.getElementById("a-avg-value").textContent = average == null ? "–" : `${average.toFixed(2)}%`;
 
-  if (rows.length > 0) {
-    const withTotals = rows.map((r) => ({ ...r, total: subjectTotal(r) }));
+  if (enteredRows.length > 0) {
+    const withTotals = enteredRows.map((r) => ({ ...r, total: subjectTotal(r) }));
     const best = withTotals.reduce((a, b) => (b.total > a.total ? b : a));
     const worst = withTotals.reduce((a, b) => (b.total < a.total ? b : a));
-    document.getElementById("a-best-subject").textContent = `${best.subject} (${best.total}/120)`;
-    document.getElementById("a-lowest-subject").textContent = `${worst.subject} (${worst.total}/120)`;
+    document.getElementById("a-best-subject").textContent = `${best.subject} (${best.total}/100)`;
+    document.getElementById("a-lowest-subject").textContent = `${worst.subject} (${worst.total}/100)`;
+  } else {
+    document.getElementById("a-best-subject").textContent = "–";
+    document.getElementById("a-lowest-subject").textContent = "–";
   }
 
   const s = semesterSummary[currentSemNum];
@@ -286,7 +307,7 @@ function loadClassDetails(semNum) {
   const s = semesterSummary[semNum];
   if (!s) return;
 
-  document.getElementById("s-welcome-msg").textContent = `Welcome back, ${currentStudent.full_name.split(" ")[0]}! 👋`;
+  document.getElementById("s-welcome-msg").textContent = `Welcome back, ${currentStudent.full_name.split(" ")[0]}.`;
 
   document.getElementById("c-full-name").textContent = currentStudent.full_name;
   document.getElementById("c-student-id").textContent = `Student ID: ${currentStudent.student_id}`;
@@ -339,7 +360,7 @@ function loadClassDetails(semNum) {
   document.getElementById("c-top5-list").innerHTML = scorers.map((sc) => `
     <div class="s-top5-row ${sc.isMe ? "me" : ""}">
       <span class="s-top5-rank">${sc.rank}</span>
-      <span class="s-top5-avatar">🙂</span>
+      <span class="s-top5-avatar" aria-hidden="true">${sc.name.charAt(0).toUpperCase()}</span>
       <span class="s-top5-name">${sc.name}</span>
       <span class="s-top5-pct">${sc.pct.toFixed(2)}%</span>
     </div>
@@ -349,27 +370,28 @@ function loadClassDetails(semNum) {
   const rows = classPerformanceBySemester[semNum] || [];
   document.getElementById("c-class-perf-body").innerHTML = rows.length
     ? rows.map((r) => {
-        const total = subjectTotal(r);
-        const attClass = r.attendance >= 90 ? "s-cell-good" : r.attendance >= 80 ? "s-cell-warn" : "s-cell-bad";
+        const mark = (value) => value == null ? "–" : Number(value).toFixed(2).replace(/\.00$/, "");
         return `
           <tr>
             <td>${r.subject}</td>
-            <td>${r.unitTest}</td>
-            <td>${r.assignment}</td>
-            <td>${r.preboard}</td>
-            <td>${r.lab !== null ? r.lab : "-"}</td>
-            <td class="${attClass}">${r.attendance}%</td>
-            <td>${r.grooming}</td>
-            <td>${r.overall}</td>
-            <td><strong>${total}</strong></td>
+            <td>${mark(r.assignment)}</td>
+            <td>${mark(r.unitTest)}</td>
+            <td>${mark(r.attendance)}</td>
+            <td>${mark(r.grooming)}</td>
+            <td>${mark(r.midterm)}</td>
+            <td>${mark(r.lab)}</td>
+            <td>${mark(r.overall)}</td>
+            <td>${mark(r.preboard)}</td>
+            <td><strong>${r.has_entered_marks ? mark(r.total) : "–"}</strong></td>
           </tr>
         `;
       }).join("")
-    : `<tr><td colspan="9" style="text-align:center;color:#8894a6;">No class performance data for this semester yet.</td></tr>`;
+    : `<tr><td colspan="10" style="text-align:center;color:#8894a6;">No class performance data for this semester yet.</td></tr>`;
 
-  document.getElementById("c-subject-bar-chart").innerHTML = rows.length
-    ? `<p style="text-align:center;color:#8894a6;font-size:12.5px;">Real subject analytics are available after marks are saved.</p>`
-    : `<p style="text-align:center;color:#8894a6;font-size:12.5px;">No subject data for this semester yet.</p>`;
+  const subjectContainer = document.getElementById("c-subject-bar-chart");
+  subjectContainer.innerHTML = '<canvas aria-label="Subject performance"></canvas>';
+  const subjectCanvas = subjectContainer.querySelector("canvas");
+  renderStudentChart("subject-performance", subjectCanvas, "bar", rows.map((row) => row.subject), rows.map((row) => subjectTotal(row)), ["#4f6df5", "#2fbf71", "#f0a84e", "#8a5cf6", "#f0664e"]);
 }
 
 /* ----------------------------------------------------------
@@ -442,7 +464,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     semesterLabels = semesterNumbers.map((n) => `${n}${n === 1 ? "st" : n === 2 ? "nd" : n === 3 ? "rd" : "th"} Semester`);
     semesterNumbers.forEach((n) => {
       const rows = classPerformanceBySemester[n] || [];
-      avgMarksBySemester[n] = rows.length ? rows.reduce((total, row) => total + subjectTotal(row), 0) / rows.length : 0;
+      const enteredRows = rows.filter((row) => row.has_entered_marks === true || row.total != null);
+      avgMarksBySemester[n] = enteredRows.length
+        ? enteredRows.reduce((total, row) => total + subjectTotal(row), 0) / enteredRows.length
+        : null;
       topScorersBySemester[n] = [];
     });
     if (!semesterNumbers.length) throw new Error("No enrollment records are available for this account.");
